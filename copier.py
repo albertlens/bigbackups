@@ -7,10 +7,14 @@ import os
 import shutil
 import time
 import threading
+from collections import deque
 from pathlib import Path
 from datetime import datetime
 from typing import Callable, Optional, Dict, Any, List
 from dataclasses import dataclass, field
+
+# Tamaño de la ventana para media móvil (en segundos/muestras)
+MEDIA_MOVIL_VENTANA = 15
 
 from config import (
     FileStatus, 
@@ -42,6 +46,7 @@ class CopyStats:
     archivos_omitidos: int = 0
     archivo_actual: str = ""
     velocidad_bytes_seg: float = 0.0
+    velocidad_archivos_seg: float = 0.0
     tiempo_transcurrido: float = 0.0
     tiempo_estimado_restante: float = 0.0
     _lock: threading.Lock = field(default_factory=threading.Lock)
@@ -74,6 +79,7 @@ class CopyStats:
                 'archivos_omitidos': self.archivos_omitidos,
                 'archivo_actual': self.archivo_actual,
                 'velocidad': self.velocidad_bytes_seg,
+                'velocidad_archivos': self.velocidad_archivos_seg,
                 'tiempo_transcurrido': self.tiempo_transcurrido,
                 'tiempo_restante': self.tiempo_estimado_restante,
                 'porcentaje': self.porcentaje,
@@ -388,6 +394,15 @@ class FileCopier:
         if not sesion:
             raise ValueError(f"Sesión {sesion_id} no encontrada")
         
+        # Crear carpeta raíz con el nombre del origen
+        # Ej: Si origen es C:\Robust\Clientes, creamos destino\Clientes
+        ruta_origen = sesion['ruta_origen']
+        nombre_carpeta_origen = os.path.basename(ruta_origen.rstrip('/\\'))
+        ruta_destino_final = os.path.join(ruta_destino, nombre_carpeta_origen)
+        
+        # Crear la carpeta raíz
+        os.makedirs(ensure_long_path(ruta_destino_final), exist_ok=True)
+        
         # Verificar espacio
         hay_espacio, mensaje = self.verificar_espacio_destino(sesion_id, ruta_destino)
         if not hay_espacio:
@@ -405,25 +420,31 @@ class FileCopier:
             bytes_copiados=stats_db['bytes_copiados']
         )
         
-        # Actualizar estado de sesión
+        # Actualizar estado de sesión (guardamos la ruta final con subcarpeta)
         self.db.actualizar_sesion(
             sesion_id,
             estado=SessionStatus.COPYING,
-            ruta_destino=ruta_destino,
+            ruta_destino=ruta_destino_final,
             fecha_inicio_copia=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
         
-        self.db.log(sesion_id, "INFO", f"Iniciando copia a: {ruta_destino}", "COPIER")
+        self.db.log(sesion_id, "INFO", f"Iniciando copia a: {ruta_destino_final}", "COPIER")
         
         # Crear estructura de carpetas primero
         self.db.log(sesion_id, "INFO", "Creando estructura de carpetas...", "COPIER")
-        carpetas_creadas = self.crear_estructura_carpetas(sesion_id, ruta_destino)
+        carpetas_creadas = self.crear_estructura_carpetas(sesion_id, ruta_destino_final)
         self.db.log(sesion_id, "INFO", f"Carpetas creadas: {carpetas_creadas}", "COPIER")
         
         # Variables para cálculo de velocidad
         tiempo_inicio = time.time()
         bytes_inicio = self.stats.bytes_copiados
+        archivos_inicio = self.stats.archivos_copiados
         ultimo_update = tiempo_inicio
+        
+        # Media móvil para tiempo estimado más preciso
+        # Almacena tuplas (timestamp, bytes_copiados) de los últimos N segundos
+        muestras_velocidad = deque(maxlen=MEDIA_MOVIL_VENTANA)
+        ultimo_bytes = self.stats.bytes_copiados
         
         try:
             while True:
@@ -459,7 +480,7 @@ class FileCopier:
                         continue
                     
                     # Copiar archivo
-                    exito, error = self._copiar_con_reintentos(archivo, ruta_destino)
+                    exito, error = self._copiar_con_reintentos(archivo, ruta_destino_final)
                     
                     with self.stats._lock:
                         if exito:
@@ -480,15 +501,33 @@ class FileCopier:
                     if ahora - ultimo_update >= 1.0:
                         tiempo_transcurrido = ahora - tiempo_inicio
                         bytes_copiados_periodo = self.stats.bytes_copiados - bytes_inicio
+                        archivos_copiados_periodo = self.stats.archivos_copiados - archivos_inicio
+                        
+                        # Añadir muestra para media móvil
+                        bytes_este_segundo = self.stats.bytes_copiados - ultimo_bytes
+                        muestras_velocidad.append((ahora, bytes_este_segundo))
+                        ultimo_bytes = self.stats.bytes_copiados
+                        
+                        # Calcular velocidad media móvil (últimos N segundos)
+                        if len(muestras_velocidad) >= 2:
+                            bytes_ventana = sum(m[1] for m in muestras_velocidad)
+                            tiempo_ventana = len(muestras_velocidad)  # Cada muestra es ~1 segundo
+                            velocidad_media_movil = bytes_ventana / tiempo_ventana if tiempo_ventana > 0 else 0
+                        else:
+                            velocidad_media_movil = bytes_este_segundo
                         
                         with self.stats._lock:
                             self.stats.tiempo_transcurrido = tiempo_transcurrido
                             if tiempo_transcurrido > 0:
                                 self.stats.velocidad_bytes_seg = bytes_copiados_periodo / tiempo_transcurrido
+                                self.stats.velocidad_archivos_seg = archivos_copiados_periodo / tiempo_transcurrido
                             
-                            # Estimar tiempo restante
+                            # Estimar tiempo restante usando media móvil
                             bytes_restantes = self.stats.total_bytes - self.stats.bytes_copiados
-                            if self.stats.velocidad_bytes_seg > 0:
+                            if velocidad_media_movil > 0:
+                                self.stats.tiempo_estimado_restante = bytes_restantes / velocidad_media_movil
+                            elif self.stats.velocidad_bytes_seg > 0:
+                                # Fallback al promedio total si no hay suficientes muestras
                                 self.stats.tiempo_estimado_restante = bytes_restantes / self.stats.velocidad_bytes_seg
                         
                         ultimo_update = ahora
@@ -565,3 +604,216 @@ def copiar_sesion(sesion_id: int, ruta_destino: str,
     copier.on_error = on_error
     copier.on_complete = on_complete
     return copier.copiar(sesion_id, ruta_destino)
+
+
+@dataclass
+class VerificationResult:
+    """Resultado de la verificación post-copia."""
+    total_archivos: int = 0
+    archivos_verificados: int = 0
+    archivos_ok: int = 0
+    archivos_faltantes_destino: int = 0
+    archivos_tamano_diferente: int = 0
+    archivos_hash_diferente: int = 0
+    archivos_faltantes_origen: int = 0
+    errores: List[Dict[str, Any]] = field(default_factory=list)
+    
+    @property
+    def todo_ok(self) -> bool:
+        return (self.archivos_faltantes_destino == 0 and 
+                self.archivos_tamano_diferente == 0 and 
+                self.archivos_hash_diferente == 0)
+    
+    def get_summary(self) -> str:
+        if self.todo_ok:
+            return f"✅ Verificación exitosa: {self.archivos_ok}/{self.total_archivos} archivos verificados correctamente"
+        else:
+            problemas = []
+            if self.archivos_faltantes_destino > 0:
+                problemas.append(f"{self.archivos_faltantes_destino} faltantes en destino")
+            if self.archivos_tamano_diferente > 0:
+                problemas.append(f"{self.archivos_tamano_diferente} con tamaño diferente")
+            if self.archivos_hash_diferente > 0:
+                problemas.append(f"{self.archivos_hash_diferente} con hash diferente")
+            return f"⚠️ Problemas encontrados: {', '.join(problemas)}"
+
+
+class PostCopyVerifier:
+    """
+    Verificador post-copia que compara origen y destino archivo por archivo.
+    """
+    
+    def __init__(self, db: Database = None):
+        self.db = db or get_database()
+        self._cancelado = False
+        self._pausado = False
+        self._lock = threading.Lock()
+        
+        # Callbacks
+        self.on_progress: Optional[Callable[[int, int, str], None]] = None
+        self.on_error: Optional[Callable[[str, str], None]] = None
+        self.on_complete: Optional[Callable[[VerificationResult], None]] = None
+    
+    def cancelar(self):
+        with self._lock:
+            self._cancelado = True
+    
+    def pausar(self):
+        with self._lock:
+            self._pausado = True
+    
+    def reanudar(self):
+        with self._lock:
+            self._pausado = False
+    
+    def _is_cancelado(self) -> bool:
+        with self._lock:
+            return self._cancelado
+    
+    def _is_pausado(self) -> bool:
+        with self._lock:
+            return self._pausado
+    
+    def _esperar_si_pausado(self):
+        while self._is_pausado() and not self._is_cancelado():
+            time.sleep(0.1)
+    
+    def verificar_sesion(self, sesion_id: int, verificar_hash: bool = True) -> VerificationResult:
+        """
+        Verifica todos los archivos copiados de una sesión.
+        
+        Args:
+            sesion_id: ID de la sesión a verificar
+            verificar_hash: Si True, calcula y compara hashes SHA256 (más lento pero 100% seguro)
+        
+        Returns:
+            VerificationResult con el resumen de la verificación
+        """
+        self._cancelado = False
+        self._pausado = False
+        
+        result = VerificationResult()
+        
+        # Obtener sesión
+        sesion = self.db.obtener_sesion(sesion_id)
+        if not sesion:
+            raise ValueError(f"Sesión {sesion_id} no encontrada")
+        
+        ruta_origen = sesion['ruta_origen']
+        ruta_destino = sesion['ruta_destino']
+        
+        if not ruta_destino:
+            raise ValueError("La sesión no tiene ruta de destino definida")
+        
+        self.db.log(sesion_id, "INFO", f"Iniciando verificación post-copia", "VERIFIER")
+        self.db.log(sesion_id, "INFO", f"Origen: {ruta_origen}", "VERIFIER")
+        self.db.log(sesion_id, "INFO", f"Destino: {ruta_destino}", "VERIFIER")
+        self.db.log(sesion_id, "INFO", f"Verificación de hash: {'Sí' if verificar_hash else 'No'}", "VERIFIER")
+        
+        # Obtener todos los archivos completados de la sesión
+        with self.db._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, ruta_origen, ruta_relativa, nombre_archivo, tamano_bytes, hash_origen
+                FROM archivos 
+                WHERE sesion_id = ? AND estado = ?
+            """, (sesion_id, FileStatus.COMPLETED))
+            archivos = [dict(row) for row in cursor.fetchall()]
+        
+        result.total_archivos = len(archivos)
+        
+        for i, archivo in enumerate(archivos):
+            if self._is_cancelado():
+                self.db.log(sesion_id, "WARNING", "Verificación cancelada por el usuario", "VERIFIER")
+                break
+            
+            self._esperar_si_pausado()
+            
+            ruta_origen_archivo = archivo['ruta_origen']
+            ruta_relativa = archivo['ruta_relativa']
+            ruta_destino_archivo = os.path.join(ruta_destino, ruta_relativa)
+            tamano_esperado = archivo['tamano_bytes']
+            hash_esperado = archivo.get('hash_origen')
+            
+            # Notificar progreso
+            if self.on_progress:
+                self.on_progress(i + 1, result.total_archivos, archivo['nombre_archivo'])
+            
+            result.archivos_verificados += 1
+            
+            # 1. Verificar que existe en destino
+            ruta_destino_long = ensure_long_path(ruta_destino_archivo)
+            if not os.path.exists(ruta_destino_long):
+                result.archivos_faltantes_destino += 1
+                error_info = {
+                    'archivo': ruta_relativa,
+                    'tipo': 'FALTANTE_DESTINO',
+                    'mensaje': 'Archivo no encontrado en destino'
+                }
+                result.errores.append(error_info)
+                if self.on_error:
+                    self.on_error(ruta_relativa, "No encontrado en destino")
+                continue
+            
+            # 2. Verificar tamaño
+            try:
+                tamano_destino = os.path.getsize(ruta_destino_long)
+                if tamano_destino != tamano_esperado:
+                    result.archivos_tamano_diferente += 1
+                    error_info = {
+                        'archivo': ruta_relativa,
+                        'tipo': 'TAMANO_DIFERENTE',
+                        'mensaje': f'Tamaño origen: {tamano_esperado}, destino: {tamano_destino}'
+                    }
+                    result.errores.append(error_info)
+                    if self.on_error:
+                        self.on_error(ruta_relativa, f"Tamaño diferente: {tamano_esperado} vs {tamano_destino}")
+                    continue
+            except Exception as e:
+                result.errores.append({
+                    'archivo': ruta_relativa,
+                    'tipo': 'ERROR_LECTURA',
+                    'mensaje': str(e)
+                })
+                continue
+            
+            # 3. Verificar hash (si está habilitado)
+            if verificar_hash:
+                try:
+                    hash_destino = calculate_hash(ruta_destino_long)
+                    
+                    if hash_esperado and hash_destino != hash_esperado:
+                        result.archivos_hash_diferente += 1
+                        error_info = {
+                            'archivo': ruta_relativa,
+                            'tipo': 'HASH_DIFERENTE',
+                            'mensaje': f'Hash no coincide'
+                        }
+                        result.errores.append(error_info)
+                        if self.on_error:
+                            self.on_error(ruta_relativa, "Hash SHA256 no coincide")
+                        continue
+                except Exception as e:
+                    result.errores.append({
+                        'archivo': ruta_relativa,
+                        'tipo': 'ERROR_HASH',
+                        'mensaje': str(e)
+                    })
+                    continue
+            
+            # Todo OK
+            result.archivos_ok += 1
+        
+        # Log final
+        self.db.log(sesion_id, "INFO", result.get_summary(), "VERIFIER")
+        
+        if result.errores:
+            for error in result.errores[:10]:  # Primeros 10 errores
+                self.db.log(sesion_id, "WARNING", 
+                           f"{error['tipo']}: {error['archivo']}", 
+                           "VERIFIER", error['mensaje'])
+        
+        if self.on_complete:
+            self.on_complete(result)
+        
+        return result

@@ -7,8 +7,10 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import threading
 import os
+import webbrowser
 from datetime import datetime
 from typing import Optional, Callable
+from PIL import Image
 
 from config import (
     APP_NAME, 
@@ -19,13 +21,26 @@ from config import (
 )
 from database import Database, get_database
 from scanner import FileScanner, ScannerStats
-from copier import FileCopier, CopyStats
+from copier import FileCopier, CopyStats, PostCopyVerifier, VerificationResult
 from utils import format_size, format_time, get_drive_space
 
 
 # Configuración de CustomTkinter
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+# Rutas de assets
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "assets", "logo.png")
+ICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "icon.ico")
+ICON_PNG_PATH = os.path.join(os.path.dirname(__file__), "assets", "icon.png")
+
+# Configurar AppUserModelID para que Windows muestre nuestro icono en la barra de tareas
+# Debe hacerse ANTES de crear cualquier ventana
+try:
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("RobustDataSolutions.BigBackups.1.0")
+except Exception:
+    pass
 
 
 class ProgressFrame(ctk.CTkFrame):
@@ -35,29 +50,29 @@ class ProgressFrame(ctk.CTkFrame):
         super().__init__(master, **kwargs)
         
         # Barra de progreso
-        self.progress_bar = ctk.CTkProgressBar(self, width=400, height=20)
-        self.progress_bar.pack(pady=(10, 5), padx=20, fill="x")
+        self.progress_bar = ctk.CTkProgressBar(self, width=400, height=15)
+        self.progress_bar.pack(pady=(8, 3), padx=15, fill="x")
         self.progress_bar.set(0)
         
         # Etiqueta de porcentaje
         self.label_porcentaje = ctk.CTkLabel(
             self, 
             text="0%",
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=20, weight="bold")
         )
-        self.label_porcentaje.pack(pady=5)
+        self.label_porcentaje.pack(pady=2)
         
         # Etiqueta de estado
         self.label_estado = ctk.CTkLabel(
             self,
             text="Listo para iniciar",
-            font=ctk.CTkFont(size=14)
+            font=ctk.CTkFont(size=12)
         )
-        self.label_estado.pack(pady=5)
+        self.label_estado.pack(pady=2)
         
         # Frame de estadísticas
         self.stats_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.stats_frame.pack(pady=10, fill="x", padx=20)
+        self.stats_frame.pack(pady=5, fill="x", padx=15)
         
         # Columna izquierda
         self.left_col = ctk.CTkFrame(self.stats_frame, fg_color="transparent")
@@ -65,25 +80,25 @@ class ProgressFrame(ctk.CTkFrame):
         
         self.label_archivos = ctk.CTkLabel(
             self.left_col,
-            text="Archivos: 0 / 0",
-            font=ctk.CTkFont(size=12)
+            text="📄 0 / 0",
+            font=ctk.CTkFont(size=11)
         )
-        self.label_archivos.pack(anchor="w", pady=2)
+        self.label_archivos.pack(anchor="w", pady=1)
         
         self.label_tamano = ctk.CTkLabel(
             self.left_col,
             text="Tamaño: 0 B / 0 B",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=11)
         )
-        self.label_tamano.pack(anchor="w", pady=2)
+        self.label_tamano.pack(anchor="w", pady=1)
         
         self.label_errores = ctk.CTkLabel(
             self.left_col,
             text="Errores: 0",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=11),
             text_color=Colors.ERROR
         )
-        self.label_errores.pack(anchor="w", pady=2)
+        self.label_errores.pack(anchor="w", pady=1)
         
         # Columna derecha
         self.right_col = ctk.CTkFrame(self.stats_frame, fg_color="transparent")
@@ -92,40 +107,40 @@ class ProgressFrame(ctk.CTkFrame):
         self.label_velocidad = ctk.CTkLabel(
             self.right_col,
             text="Velocidad: -- MB/s",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=11)
         )
-        self.label_velocidad.pack(anchor="e", pady=2)
+        self.label_velocidad.pack(anchor="e", pady=1)
         
         self.label_tiempo = ctk.CTkLabel(
             self.right_col,
             text="Tiempo: 0s",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=11)
         )
-        self.label_tiempo.pack(anchor="e", pady=2)
+        self.label_tiempo.pack(anchor="e", pady=1)
         
         self.label_restante = ctk.CTkLabel(
             self.right_col,
             text="Restante: --",
-            font=ctk.CTkFont(size=12)
+            font=ctk.CTkFont(size=11)
         )
-        self.label_restante.pack(anchor="e", pady=2)
+        self.label_restante.pack(anchor="e", pady=1)
         
         # Archivo actual
         self.label_archivo_actual = ctk.CTkLabel(
             self,
             text="",
-            font=ctk.CTkFont(size=10),
+            font=ctk.CTkFont(size=9),
             text_color=Colors.TEXT_SECONDARY,
             wraplength=500
         )
-        self.label_archivo_actual.pack(pady=5, padx=20)
+        self.label_archivo_actual.pack(pady=3, padx=15)
     
     def reset(self):
         """Resetea el progreso."""
         self.progress_bar.set(0)
         self.label_porcentaje.configure(text="0%")
         self.label_estado.configure(text="Listo para iniciar")
-        self.label_archivos.configure(text="Archivos: 0 / 0")
+        self.label_archivos.configure(text="📄 0 / 0")
         self.label_tamano.configure(text="Tamaño: 0 B / 0 B")
         self.label_errores.configure(text="Errores: 0")
         self.label_velocidad.configure(text="Velocidad: -- MB/s")
@@ -164,8 +179,9 @@ class ProgressFrame(ctk.CTkFrame):
         self.label_errores.configure(text=f"Errores: {data['archivos_error']}")
         
         if data['velocidad'] > 0:
+            vel_archivos = data.get('velocidad_archivos', 0)
             self.label_velocidad.configure(
-                text=f"Velocidad: {format_size(data['velocidad'])}/s"
+                text=f"Velocidad: {format_size(data['velocidad'])}/s | {vel_archivos:.1f} arch/s"
             )
         
         self.label_tiempo.configure(
@@ -239,9 +255,22 @@ class BigBackupsApp(ctk.CTk):
         super().__init__()
         
         # Configuración de ventana
-        self.title(f"{APP_NAME} v{APP_VERSION}")
+        self.title(f"Robust Data Solutions - {APP_NAME} v{APP_VERSION}")
         self.geometry("700x800")
         self.minsize(600, 700)
+        
+        # Icono de ventana
+        if os.path.exists(ICON_PATH):
+            self.iconbitmap(ICON_PATH)
+        # Icono para barra de tareas (usa PNG)
+        if os.path.exists(ICON_PNG_PATH):
+            try:
+                from tkinter import PhotoImage
+                icon_img = PhotoImage(file=ICON_PNG_PATH)
+                self.wm_iconphoto(True, icon_img)
+                self._icon_img = icon_img  # Mantener referencia
+            except Exception:
+                pass
         
         # Base de datos
         self.db = get_database()
@@ -250,6 +279,7 @@ class BigBackupsApp(ctk.CTk):
         self.sesion_id: Optional[int] = None
         self.scanner: Optional[FileScanner] = None
         self.copier: Optional[FileCopier] = None
+        self.verifier: Optional[PostCopyVerifier] = None
         self.hilo_actual: Optional[threading.Thread] = None
         self.operacion_en_curso = False
         
@@ -264,55 +294,77 @@ class BigBackupsApp(ctk.CTk):
         
         # Frame principal con scroll
         self.main_frame = ctk.CTkScrollableFrame(self)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_frame.pack(fill="both", expand=True, padx=8, pady=8)
         
-        # === SECCIÓN: TÍTULO ===
+        # === SECCIÓN: LOGO Y TÍTULO ===
         self.header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.header_frame.pack(fill="x", pady=(0, 20))
+        self.header_frame.pack(fill="x", pady=(0, 10))
+        
+        # Cargar logo si existe
+        if os.path.exists(LOGO_PATH):
+            try:
+                logo_image = Image.open(LOGO_PATH)
+                self.logo_ctk = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(180, 66))
+                self.logo_label = ctk.CTkLabel(self.header_frame, image=self.logo_ctk, text="")
+                self.logo_label.pack(pady=(0, 5))
+            except Exception:
+                pass
         
         self.title_label = ctk.CTkLabel(
             self.header_frame,
-            text=f"🗂️ {APP_NAME}",
-            font=ctk.CTkFont(size=28, weight="bold")
+            text=f"{APP_NAME}",
+            font=ctk.CTkFont(size=22, weight="bold")
         )
         self.title_label.pack()
+        
+        # Copyright con enlace en cabecera
+        self.header_copyright = ctk.CTkLabel(
+            self.header_frame,
+            text="© 2026 Robust Data Solutions",
+            font=ctk.CTkFont(size=9),
+            text_color="#3b82f6",
+            cursor="hand2"
+        )
+        self.header_copyright.pack()
+        self.header_copyright.bind("<Button-1>", lambda e: webbrowser.open("https://robustdatasolutions.com/"))
         
         self.subtitle_label = ctk.CTkLabel(
             self.header_frame,
             text="Copia segura de grandes volúmenes de datos con verificación SHA256",
-            font=ctk.CTkFont(size=12),
+            font=ctk.CTkFont(size=10),
             text_color=Colors.TEXT_SECONDARY
         )
         self.subtitle_label.pack()
         
         # === SECCIÓN: RUTAS ===
         self.paths_frame = ctk.CTkFrame(self.main_frame)
-        self.paths_frame.pack(fill="x", pady=10)
+        self.paths_frame.pack(fill="x", pady=6)
         
         # Ruta origen
         self.origen_label = ctk.CTkLabel(
             self.paths_frame,
             text="📁 Carpeta Origen:",
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(size=11, weight="bold")
         )
-        self.origen_label.pack(anchor="w", padx=15, pady=(15, 5))
+        self.origen_label.pack(anchor="w", padx=12, pady=(10, 3))
         
         self.origen_frame = ctk.CTkFrame(self.paths_frame, fg_color="transparent")
-        self.origen_frame.pack(fill="x", padx=15, pady=(0, 10))
+        self.origen_frame.pack(fill="x", padx=12, pady=(0, 6))
         
         self.origen_entry = ctk.CTkEntry(
             self.origen_frame,
             placeholder_text="Selecciona la carpeta de origen...",
-            height=35,
-            font=ctk.CTkFont(size=12)
+            height=30,
+            font=ctk.CTkFont(size=11)
         )
-        self.origen_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.origen_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
         
         self.origen_btn = ctk.CTkButton(
             self.origen_frame,
             text="Explorar",
-            width=100,
-            height=35,
+            width=80,
+            height=30,
+            font=ctk.CTkFont(size=11),
             command=self._seleccionar_origen
         )
         self.origen_btn.pack(side="right")
@@ -321,26 +373,27 @@ class BigBackupsApp(ctk.CTk):
         self.destino_label = ctk.CTkLabel(
             self.paths_frame,
             text="💾 Carpeta Destino:",
-            font=ctk.CTkFont(size=13, weight="bold")
+            font=ctk.CTkFont(size=11, weight="bold")
         )
-        self.destino_label.pack(anchor="w", padx=15, pady=(10, 5))
+        self.destino_label.pack(anchor="w", padx=12, pady=(6, 3))
         
         self.destino_frame = ctk.CTkFrame(self.paths_frame, fg_color="transparent")
-        self.destino_frame.pack(fill="x", padx=15, pady=(0, 15))
+        self.destino_frame.pack(fill="x", padx=12, pady=(0, 10))
         
         self.destino_entry = ctk.CTkEntry(
             self.destino_frame,
             placeholder_text="Selecciona la carpeta de destino (disco externo)...",
-            height=35,
-            font=ctk.CTkFont(size=12)
+            height=30,
+            font=ctk.CTkFont(size=11)
         )
-        self.destino_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.destino_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
         
         self.destino_btn = ctk.CTkButton(
             self.destino_frame,
             text="Explorar",
-            width=100,
-            height=35,
+            width=80,
+            height=30,
+            font=ctk.CTkFont(size=11),
             command=self._seleccionar_destino
         )
         self.destino_btn.pack(side="right")
@@ -349,83 +402,111 @@ class BigBackupsApp(ctk.CTk):
         self.espacio_label = ctk.CTkLabel(
             self.paths_frame,
             text="",
-            font=ctk.CTkFont(size=11),
+            font=ctk.CTkFont(size=10),
             text_color=Colors.TEXT_SECONDARY
         )
-        self.espacio_label.pack(anchor="w", padx=15, pady=(0, 10))
+        self.espacio_label.pack(anchor="w", padx=12, pady=(0, 6))
         
         # === SECCIÓN: PROGRESO ===
         self.progress_frame = ProgressFrame(self.main_frame)
-        self.progress_frame.pack(fill="x", pady=10)
+        self.progress_frame.pack(fill="x", pady=6)
         
         # === SECCIÓN: BOTONES DE ACCIÓN ===
         self.actions_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.actions_frame.pack(fill="x", pady=15)
+        self.actions_frame.pack(fill="x", pady=8)
         
         # Fila 1: Escanear e Iniciar Copia
         self.row1_frame = ctk.CTkFrame(self.actions_frame, fg_color="transparent")
-        self.row1_frame.pack(fill="x", pady=5)
+        self.row1_frame.pack(fill="x", pady=3)
         
         self.escanear_btn = ctk.CTkButton(
             self.row1_frame,
             text="🔍 1. Escanear Origen",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            height=50,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            height=38,
             fg_color=Colors.PRIMARY,
             command=self._iniciar_escaneo
         )
-        self.escanear_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        self.escanear_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
         
         self.copiar_btn = ctk.CTkButton(
             self.row1_frame,
             text="📋 2. Iniciar Copia",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            height=50,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            height=38,
             fg_color=Colors.SUCCESS,
             state="disabled",
             command=self._iniciar_copia
         )
-        self.copiar_btn.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        self.copiar_btn.pack(side="right", fill="x", expand=True, padx=(4, 0))
         
         # Fila 2: Pausar y Cancelar
         self.row2_frame = ctk.CTkFrame(self.actions_frame, fg_color="transparent")
-        self.row2_frame.pack(fill="x", pady=5)
+        self.row2_frame.pack(fill="x", pady=3)
         
         self.pausar_btn = ctk.CTkButton(
             self.row2_frame,
             text="⏸️ Pausar",
-            height=40,
+            height=32,
+            font=ctk.CTkFont(size=11),
             fg_color=Colors.WARNING,
             state="disabled",
             command=self._pausar_operacion
         )
-        self.pausar_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        self.pausar_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
         
         self.cancelar_btn = ctk.CTkButton(
             self.row2_frame,
             text="❌ Cancelar",
-            height=40,
+            height=32,
+            font=ctk.CTkFont(size=11),
             fg_color=Colors.ERROR,
             state="disabled",
             command=self._cancelar_operacion
         )
-        self.cancelar_btn.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        self.cancelar_btn.pack(side="right", fill="x", expand=True, padx=(4, 0))
+        
+        # Fila 3: Verificar
+        self.row3_frame = ctk.CTkFrame(self.actions_frame, fg_color="transparent")
+        self.row3_frame.pack(fill="x", pady=3)
+        
+        self.verificar_btn = ctk.CTkButton(
+            self.row3_frame,
+            text="✅ 3. Verificar Copia",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            height=38,
+            fg_color="#6366f1",
+            state="disabled",
+            command=self._iniciar_verificacion
+        )
+        self.verificar_btn.pack(fill="x")
         
         # === SECCIÓN: LOG ===
         self.log_frame = LogFrame(self.main_frame)
-        self.log_frame.pack(fill="both", expand=True, pady=10)
+        self.log_frame.pack(fill="both", expand=True, pady=6)
         
         # === SECCIÓN: FOOTER ===
         self.footer_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.footer_frame.pack(fill="x", pady=(10, 0))
+        self.footer_frame.pack(fill="x", pady=(6, 0))
         
         self.footer_label = ctk.CTkLabel(
             self.footer_frame,
-            text=f"{APP_NAME} v{APP_VERSION} | Verificación SHA256 | Copia segura garantizada",
-            font=ctk.CTkFont(size=10),
+            text=f"{APP_NAME} v{APP_VERSION} | Verificación SHA256",
+            font=ctk.CTkFont(size=9),
             text_color=Colors.TEXT_SECONDARY
         )
         self.footer_label.pack()
+        
+        # Copyright con enlace
+        self.copyright_label = ctk.CTkLabel(
+            self.footer_frame,
+            text="© 2026 Robust Data Solutions",
+            font=ctk.CTkFont(size=9),
+            text_color="#3b82f6",
+            cursor="hand2"
+        )
+        self.copyright_label.pack()
+        self.copyright_label.bind("<Button-1>", lambda e: webbrowser.open("https://robustdatasolutions.com/"))
     
     def _seleccionar_origen(self):
         """Abre diálogo para seleccionar carpeta origen."""
@@ -511,10 +592,49 @@ class BigBackupsApp(ctk.CTk):
             return
         
         origen = self.origen_entry.get().strip()
+        destino = self.destino_entry.get().strip()
         
-        # Crear sesión
+        # Buscar si existe una sesión previa con las mismas rutas
+        sesion_existente = self.db.buscar_sesion_por_rutas(origen, destino)
+        
+        if sesion_existente:
+            # Obtener progreso de la sesión
+            progreso = self.db.obtener_progreso_sesion(sesion_existente['id'])
+            
+            # Preguntar al usuario si quiere continuar
+            respuesta = messagebox.askyesnocancel(
+                "Sesión encontrada",
+                f"Se encontró una sesión anterior con estas rutas:\n\n"
+                f"📁 Origen: {origen}\n"
+                f"💾 Destino: {destino}\n\n"
+                f"Progreso: {progreso['copiados']:,} de {progreso['total']:,} archivos copiados\n"
+                f"({progreso['pendientes']:,} pendientes)\n\n"
+                f"¿Desea CONTINUAR la sesión anterior?\n\n"
+                f"• Sí = Continuar donde lo dejó\n"
+                f"• No = Crear nueva sesión (empezar de cero)\n"
+                f"• Cancelar = No hacer nada"
+            )
+            
+            if respuesta is None:  # Cancelar
+                return
+            elif respuesta:  # Sí - Continuar sesión existente
+                self.sesion_id = sesion_existente['id']
+                self.log_frame.agregar_log(
+                    f"Reanudando sesión anterior (ID: {self.sesion_id}) - "
+                    f"{progreso['copiados']:,} archivos ya copiados", "SUCCESS"
+                )
+                # Actualizar estado
+                self.db.actualizar_sesion(self.sesion_id, estado=SessionStatus.SCANNING)
+                # No necesitamos re-escanear, solo habilitamos el botón de copia
+                self._habilitar_copiar_sesion_existente(progreso)
+                return
+            else:  # No - Crear nueva sesión
+                # Eliminar sesión anterior
+                self.db.eliminar_sesion(sesion_existente['id'])
+                self.log_frame.agregar_log("Sesión anterior eliminada. Creando nueva...", "INFO")
+        
+        # Crear nueva sesión
         nombre = f"Backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        destino = self.destino_entry.get().strip() or "Pendiente"
         
         self.sesion_id = self.db.crear_sesion(nombre, origen, destino)
         self.log_frame.agregar_log(f"Sesión creada: {nombre} (ID: {self.sesion_id})", "SUCCESS")
@@ -539,6 +659,36 @@ class BigBackupsApp(ctk.CTk):
             daemon=True
         )
         self.hilo_actual.start()
+    
+    def _habilitar_copiar_sesion_existente(self, progreso: dict):
+        """Habilita el botón de copia para una sesión existente reanudada."""
+        from utils import format_size
+        
+        # Mostrar progreso en la interfaz
+        total = progreso['total']
+        copiados = progreso['copiados']
+        pendientes = progreso['pendientes']
+        bytes_copiados = progreso['bytes_copiados']
+        bytes_totales = progreso['bytes_totales']
+        
+        porcentaje = (copiados / total * 100) if total > 0 else 0
+        
+        self.progress_frame.progress_bar.set(porcentaje / 100)
+        self.progress_frame.label_porcentaje.configure(text=f"{porcentaje:.1f}%")
+        self.progress_frame.label_estado.configure(text="Sesión reanudada - Listo para continuar")
+        self.progress_frame.label_archivos.configure(text=f"Archivos: {copiados:,} / {total:,}")
+        self.progress_frame.label_tamano.configure(
+            text=f"Tamaño: {format_size(bytes_copiados)} / {format_size(bytes_totales)}"
+        )
+        
+        # Habilitar botón de copia
+        self.copiar_btn.configure(state="normal")
+        self.verificar_btn.configure(state="normal")
+        
+        self.log_frame.agregar_log(
+            f"Pendientes: {pendientes:,} archivos ({format_size(bytes_totales - bytes_copiados)})",
+            "INFO"
+        )
     
     def _ejecutar_escaneo(self, origen: str):
         """Ejecuta el escaneo en un hilo separado."""
@@ -656,6 +806,9 @@ class BigBackupsApp(ctk.CTk):
             self._habilitar_controles(True)
             self.operacion_en_curso = False
             
+            # Habilitar botón de verificación
+            self.verificar_btn.configure(state="normal")
+            
             self.progress_frame.progress_bar.set(1.0)
             self.progress_frame.label_porcentaje.configure(text="100%")
             
@@ -672,7 +825,7 @@ class BigBackupsApp(ctk.CTk):
                     f"📁 Archivos copiados: {data['archivos_copiados']:,}\n"
                     f"💾 Tamaño total: {format_size(data['bytes_copiados'])}\n"
                     f"⏱️ Tiempo total: {format_time(data['tiempo_transcurrido'])}\n\n"
-                    f"Todos los archivos han sido verificados con SHA256."
+                    f"Puedes usar el botón 'Verificar Copia' para una comprobación adicional."
                 )
             else:
                 self.progress_frame.label_estado.configure(text="Copia completada con errores ⚠️")
@@ -686,6 +839,116 @@ class BigBackupsApp(ctk.CTk):
                     f"📁 Archivos copiados: {data['archivos_copiados']:,}\n"
                     f"❌ Archivos con error: {data['archivos_error']}\n"
                     f"⏭️ Archivos omitidos: {data['archivos_omitidos']}\n\n"
+                    f"Revisa el log para más detalles.\n"
+                    f"Usa 'Verificar Copia' para comprobar los archivos copiados."
+                )
+        
+        self.after(0, actualizar_ui)
+    
+    def _iniciar_verificacion(self):
+        """Inicia la verificación post-copia."""
+        if not self.sesion_id:
+            messagebox.showerror("Error", "No hay sesión activa para verificar.")
+            return
+        
+        # Confirmar verificación (puede ser lento)
+        respuesta = messagebox.askyesno(
+            "Verificación Post-Copia",
+            "La verificación comparará cada archivo del destino con el origen:\n\n"
+            "• Existencia del archivo\n"
+            "• Tamaño correcto\n"
+            "• Hash SHA256 idéntico\n\n"
+            "Este proceso puede tardar varios minutos.\n"
+            "¿Deseas continuar?"
+        )
+        
+        if not respuesta:
+            return
+        
+        # Preparar verificador
+        self.verifier = PostCopyVerifier(self.db)
+        self.verifier.on_progress = self._on_verify_progress
+        self.verifier.on_error = self._on_verify_error
+        self.verifier.on_complete = self._on_verify_complete
+        
+        # Deshabilitar controles
+        self._habilitar_controles(False)
+        self.verificar_btn.configure(state="disabled")
+        self.operacion_en_curso = True
+        self.progress_frame.reset()
+        self.progress_frame.label_estado.configure(text="Verificando archivos...")
+        
+        self.log_frame.agregar_log("Iniciando verificación post-copia...", "INFO")
+        
+        # Ejecutar en hilo separado
+        self.hilo_actual = threading.Thread(
+            target=self._ejecutar_verificacion,
+            daemon=True
+        )
+        self.hilo_actual.start()
+    
+    def _ejecutar_verificacion(self):
+        """Ejecuta la verificación en un hilo separado."""
+        try:
+            self.verifier.verificar_sesion(self.sesion_id, verificar_hash=True)
+        except Exception as e:
+            self.after(0, lambda: self._on_verify_error("", str(e)))
+    
+    def _on_verify_progress(self, actual: int, total: int, archivo: str):
+        """Callback de progreso de la verificación."""
+        def actualizar():
+            porcentaje = actual / total if total > 0 else 0
+            self.progress_frame.progress_bar.set(porcentaje)
+            self.progress_frame.label_porcentaje.configure(text=f"{porcentaje*100:.1f}%")
+            self.progress_frame.label_estado.configure(text=f"Verificando: {archivo}")
+            self.progress_frame.label_archivos.configure(text=f"📄 {actual:,} / {total:,}")
+        self.after(0, actualizar)
+    
+    def _on_verify_error(self, archivo: str, error: str):
+        """Callback de error de la verificación."""
+        self.after(0, lambda: self.log_frame.agregar_log(f"⚠️ {archivo}: {error}", "WARNING"))
+    
+    def _on_verify_complete(self, result: VerificationResult):
+        """Callback de verificación completada."""
+        def actualizar_ui():
+            self._habilitar_controles(True)
+            self.verificar_btn.configure(state="normal")
+            self.operacion_en_curso = False
+            
+            self.progress_frame.progress_bar.set(1.0)
+            self.progress_frame.label_porcentaje.configure(text="100%")
+            
+            if result.todo_ok:
+                self.progress_frame.label_estado.configure(text="¡Verificación exitosa! ✅✅")
+                self.log_frame.agregar_log(
+                    f"✅ Verificación completada: {result.archivos_ok:,}/{result.total_archivos:,} archivos OK",
+                    "SUCCESS"
+                )
+                messagebox.showinfo(
+                    "Verificación Exitosa",
+                    f"¡Todos los archivos han sido verificados correctamente!\n\n"
+                    f"✅ Archivos verificados: {result.archivos_ok:,}\n"
+                    f"📁 Total archivos: {result.total_archivos:,}\n\n"
+                    f"La copia es 100% idéntica al origen."
+                )
+            else:
+                self.progress_frame.label_estado.configure(text="Verificación con problemas ⚠️")
+                self.log_frame.agregar_log(result.get_summary(), "WARNING")
+                
+                detalles = []
+                if result.archivos_faltantes_destino > 0:
+                    detalles.append(f"❌ Faltantes en destino: {result.archivos_faltantes_destino}")
+                if result.archivos_tamano_diferente > 0:
+                    detalles.append(f"📏 Tamaño diferente: {result.archivos_tamano_diferente}")
+                if result.archivos_hash_diferente > 0:
+                    detalles.append(f"🔐 Hash diferente: {result.archivos_hash_diferente}")
+                
+                messagebox.showwarning(
+                    "Verificación con Problemas",
+                    f"Se encontraron diferencias entre origen y destino:\n\n"
+                    f"{chr(10).join(detalles)}\n\n"
+                    f"✅ Archivos OK: {result.archivos_ok:,}\n"
+                    f"📁 Total: {result.total_archivos:,}\n\n"
                     f"Revisa el log para más detalles."
                 )
         
@@ -693,25 +956,31 @@ class BigBackupsApp(ctk.CTk):
     
     def _pausar_operacion(self):
         """Pausa o reanuda la operación actual."""
-        if self.scanner and self.operacion_en_curso:
-            if self.pausar_btn.cget("text") == "⏸️ Pausar":
-                self.scanner.pausar()
-                self.pausar_btn.configure(text="▶️ Reanudar")
-                self.log_frame.agregar_log("Operación pausada", "WARNING")
-            else:
-                self.scanner.reanudar()
-                self.pausar_btn.configure(text="⏸️ Pausar")
-                self.log_frame.agregar_log("Operación reanudada")
+        if not self.operacion_en_curso:
+            return
         
-        if self.copier and self.operacion_en_curso:
-            if self.pausar_btn.cget("text") == "⏸️ Pausar":
-                self.copier.pausar()
-                self.pausar_btn.configure(text="▶️ Reanudar")
-                self.log_frame.agregar_log("Copia pausada", "WARNING")
-            else:
+        esta_pausado = self.pausar_btn.cget("text") != "⏸️ Pausar"
+        
+        if esta_pausado:
+            # Reanudar
+            if self.scanner:
+                self.scanner.reanudar()
+            if self.copier:
                 self.copier.reanudar()
-                self.pausar_btn.configure(text="⏸️ Pausar")
-                self.log_frame.agregar_log("Copia reanudada")
+            if self.verifier:
+                self.verifier.reanudar()
+            self.pausar_btn.configure(text="⏸️ Pausar")
+            self.log_frame.agregar_log("Operación reanudada")
+        else:
+            # Pausar
+            if self.scanner:
+                self.scanner.pausar()
+            if self.copier:
+                self.copier.pausar()
+            if self.verifier:
+                self.verifier.pausar()
+            self.pausar_btn.configure(text="▶️ Reanudar")
+            self.log_frame.agregar_log("Operación pausada", "WARNING")
     
     def _cancelar_operacion(self):
         """Cancela la operación actual."""
@@ -726,6 +995,8 @@ class BigBackupsApp(ctk.CTk):
                 self.scanner.cancelar()
             if self.copier:
                 self.copier.cancelar()
+            if self.verifier:
+                self.verifier.cancelar()
             
             self.log_frame.agregar_log("Operación cancelada por el usuario", "WARNING")
     

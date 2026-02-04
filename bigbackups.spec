@@ -13,11 +13,18 @@ block_cipher = None
 # Recoger datos de customtkinter
 ctk_datas = collect_data_files('customtkinter')
 
+# Assets de la aplicación (logo e icono)
+app_assets = [
+    ('assets/logo.png', 'assets'),
+    ('assets/icon.png', 'assets'),
+    ('assets/icon.ico', 'assets'),
+]
+
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=ctk_datas,
+    datas=ctk_datas + app_assets,
     hiddenimports=[
         'customtkinter',
         'PIL',
@@ -63,6 +70,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # Puedes agregar un .ico aquí: icon='icon.ico'
+    icon='assets/icon.ico',  # Icono del EXE
     version=None,  # Puedes agregar info de versión
 )

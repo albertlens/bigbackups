@@ -166,21 +166,44 @@ def is_onedrive_cloud_file(file_path: str) -> bool:
         file_path: Ruta del archivo
     
     Returns:
-        True si el archivo está solo en la nube
+        True si el archivo está solo en la nube (placeholder sin contenido local)
     """
     try:
-        # Atributo de Windows para archivos "recall on data access"
+        # Primero verificar si la ruta está dentro de OneDrive
+        onedrive_paths = [
+            os.environ.get('OneDrive', ''),
+            os.environ.get('OneDriveConsumer', ''),
+            os.environ.get('OneDriveCommercial', ''),
+        ]
+        
+        file_path_lower = file_path.lower()
+        is_in_onedrive = any(
+            od_path and file_path_lower.startswith(od_path.lower()) 
+            for od_path in onedrive_paths if od_path
+        )
+        
+        # Si no está en OneDrive, no es un archivo cloud de OneDrive
+        if not is_in_onedrive:
+            return False
+        
+        # Atributo de Windows para archivos "recall on data access" (solo en nube)
         FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS = 0x00400000
-        FILE_ATTRIBUTE_OFFLINE = 0x00001000
+        # Atributo para archivos sparse (parcialmente en nube)
+        FILE_ATTRIBUTE_SPARSE_FILE = 0x00000200
+        # Atributo pinned/unpinned de OneDrive
+        FILE_ATTRIBUTE_PINNED = 0x00080000
+        FILE_ATTRIBUTE_UNPINNED = 0x00100000
         
         attrs = ctypes.windll.kernel32.GetFileAttributesW(file_path)
         
         if attrs == -1:
             return False
         
-        # Verificar si tiene atributos de archivo en la nube
-        is_cloud = (attrs & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS) or (attrs & FILE_ATTRIBUTE_OFFLINE)
-        return bool(is_cloud)
+        # Solo marcar como "solo en nube" si tiene RECALL_ON_DATA_ACCESS
+        # Este atributo indica que el archivo debe descargarse al acceder
+        is_cloud_only = bool(attrs & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS)
+        
+        return is_cloud_only
     except:
         return False
 

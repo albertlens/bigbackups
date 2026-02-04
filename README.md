@@ -1,22 +1,40 @@
 # BigBackups 🗂️
 
-**Aplicación profesional de copia segura para grandes volúmenes de datos con verificación SHA256**
+<p align="center">
+  <img src="assets/logo.png" alt="Robust Data Solutions - BigBackups" width="270">
+</p>
 
-Diseñada para copiar carpetas con miles de archivos y subcarpetas desde cualquier origen (disco local, OneDrive, carpeta de red) a un disco externo, garantizando la integridad de cada archivo mediante verificación criptográfica.
+<p align="center">
+  <strong>Aplicación profesional de copia segura para grandes volúmenes de datos con verificación SHA256</strong>
+</p>
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+<p align="center">
+  Desarrollado por <a href="https://robustdatasolutions.com">Robust Data Solutions</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Python-3.11+-green.svg" alt="Python">
+  <img src="https://img.shields.io/badge/Platform-Windows-lightgrey.svg" alt="Platform">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+</p>
+
+---
+
+## 📋 Descripción
+
+BigBackups está diseñada para copiar carpetas con miles de archivos y subcarpetas desde cualquier origen (disco local, OneDrive, carpeta de red) a un disco externo, garantizando la integridad de cada archivo mediante verificación criptográfica SHA256.
 
 ---
 
 ## 🎯 Caso de uso
 
 Esta herramienta está pensada para:
-- Empresas que necesitan que sus clientes copien grandes volúmenes de información a discos externos
-- Backups de carpetas OneDrive sincronizadas
-- Copias de seguridad desde servidores de red locales
+- **Empresas** que necesitan que sus clientes copien grandes volúmenes de información a discos externos
+- **Backups de OneDrive** - carpetas sincronizadas localmente
+- **Copias de seguridad** desde servidores de red locales (rutas UNC)
 - Cualquier situación donde se requiera una copia **verificada** y **fiable** de cientos de GB
+- **Backups de larga duración** que pueden pausarse y reanudarse en múltiples sesiones/días
 
 ## ✨ Características principales
 
@@ -28,39 +46,48 @@ Esta herramienta está pensada para:
 | ☁️ **Detección OneDrive** | Identifica archivos que están solo en la nube (no descargados) |
 | 🔄 **Sistema de reintentos** | Backoff exponencial ante fallos temporales de red/disco |
 | ⏸️ **Pausar/Reanudar** | Continúa copias interrumpidas desde donde quedaron |
+| 🔁 **Detección de sesiones** | Al reabrir la app detecta sesiones anteriores y ofrece continuarlas |
 | 📋 **Log completo** | Registro detallado de todas las operaciones en DB |
 | 📊 **Progreso en tiempo real** | Velocidad, tiempo restante, archivos procesados |
-| 💾 **EXE standalone** | No requiere Python instalado en el equipo del cliente |
+| 💾 **EXE portable** | Ejecutable único (~16MB), no requiere Python instalado |
 
 ---
 
 ## 🖥️ Interfaz
 
-La aplicación cuenta con una GUI moderna y profesional:
+La aplicación cuenta con una GUI moderna y profesional con tema oscuro:
 
-- Selección de carpeta origen y destino con explorador
+- **Header corporativo** con logo de Robust Data Solutions
+- Selección de carpeta origen y destino con explorador de archivos
 - Indicador de espacio disponible en disco destino
-- Barra de progreso con porcentaje y estadísticas
-- Log de eventos en tiempo real
-- Botones de pausar/cancelar operación
+- Barra de progreso con porcentaje y estadísticas en tiempo real
+- Log de eventos con scroll automático
+- Botones de Pausar/Cancelar operación
+- **Icono personalizado** en ventana y barra de tareas
 
 ---
 
-## 📦 Instalación para desarrollo
+## 📦 Instalación
 
-### Requisitos
+### Opción 1: Ejecutable portable (recomendado para usuarios finales)
+
+Descarga `BigBackups.exe` de la carpeta `dist/` y ejecútalo directamente. No requiere instalación.
+
+### Opción 2: Desde código fuente (desarrollo)
+
+#### Requisitos
 - Python 3.11 o superior
 - Windows 10/11
 
-### Dependencias
+#### Dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Las dependencias son mínimas:
-- `customtkinter` - GUI moderna
-- `pillow` - Soporte de imágenes para CustomTkinter
+Dependencias principales:
+- `customtkinter` - GUI moderna con tema oscuro
+- `pillow` - Soporte de imágenes
 - `pyinstaller` - Generación de ejecutable (solo para build)
 
 ---
@@ -80,17 +107,19 @@ python main.py
 build.bat
 ```
 
-**Opción 2: Manual**
+**Opción 2: Manual con PyInstaller**
 ```bash
 pip install pyinstaller
-pyinstaller bigbackups.spec --noconfirm
+python -m PyInstaller --clean bigbackups.spec
 ```
 
-El ejecutable se genera en `dist/BigBackups.exe` (~30-50MB, standalone)
+El ejecutable se genera en `dist/BigBackups.exe` (~16MB, portable)
 
 ---
 
-## 📖 Flujo de uso
+## 📖 Flujo de trabajo
+
+### Flujo normal (backup nuevo)
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -108,7 +137,7 @@ El ejecutable se genera en `dist/BigBackups.exe` (~30-50MB, standalone)
 │     → Crea estructura de carpetas                   │
 │     → Copia cada archivo calculando SHA256          │
 │     → Verifica hash del archivo copiado             │
-│     → Puede pausarse y reanudarse                   │
+│     → Puede pausarse en cualquier momento           │
 ├─────────────────────────────────────────────────────┤
 │  5. VERIFICACIÓN                                    │
 │     → Todos los archivos verificados con SHA256     │
@@ -116,6 +145,19 @@ El ejecutable se genera en `dist/BigBackups.exe` (~30-50MB, standalone)
 │     → Resumen final de la operación                 │
 └─────────────────────────────────────────────────────┘
 ```
+
+### Flujo de reanudación (backup interrumpido)
+
+Si cerraste la aplicación durante una copia (pausada o no):
+
+1. Abre BigBackups nuevamente
+2. Selecciona las **mismas rutas** origen y destino
+3. Haz clic en **"Escanear"**
+4. La aplicación detecta la sesión anterior y pregunta:
+   - **Sí**: Continuar desde donde quedó
+   - **No**: Eliminar sesión anterior y empezar de nuevo
+   - **Cancelar**: Abortar operación
+5. Si eliges continuar, verás el progreso actual y podrás pulsar "Copiar"
 
 ---
 
@@ -129,11 +171,19 @@ bigbackups/
 ├── scanner.py           # Escaneo recursivo de directorios
 ├── copier.py            # Copia con verificación SHA256
 ├── utils.py             # Utilidades (hash, formato, detección OneDrive)
-├── config.py            # Configuración global
+├── config.py            # Configuración global (versión, constantes)
 ├── requirements.txt     # Dependencias Python
 ├── bigbackups.spec      # Configuración de PyInstaller
 ├── build.bat            # Script de construcción del EXE
-└── README.md            # Esta documentación
+├── README.md            # Esta documentación
+├── assets/              # Recursos gráficos
+│   ├── logo.svg         # Logo vectorial (Robust Data Solutions)
+│   ├── logo.png         # Logo rasterizado (180x66)
+│   ├── icon.svg         # Icono vectorial (R*)
+│   ├── icon.png         # Icono rasterizado (256x256)
+│   └── icon.ico         # Icono Windows (multi-resolución)
+└── dist/                # Ejecutable compilado
+    └── BigBackups.exe   # Aplicación portable (~16MB)
 ```
 
 ---
@@ -144,25 +194,33 @@ La aplicación crea `bigbackups.db` junto al ejecutable con las siguientes tabla
 
 ### Tabla `sesiones`
 Información de cada trabajo de backup:
-- Rutas origen/destino
-- Estado (escaneando, copiando, completada, etc.)
-- Estadísticas totales
-- Fechas de inicio/fin
+- `id` - Identificador único
+- `ruta_origen`, `ruta_destino` - Rutas de trabajo
+- `estado` - (ESCANEANDO, EN_PROGRESO, PAUSADA, COMPLETADA, CANCELADA)
+- `total_archivos`, `total_bytes` - Estadísticas totales
+- `archivos_copiados`, `bytes_copiados` - Progreso actual
+- `fecha_inicio`, `fecha_fin` - Timestamps
 
 ### Tabla `archivos`
 Catálogo completo de archivos:
-- Ruta origen y destino
-- Nombre, extensión, tamaño
-- Hash SHA256 origen y destino
-- Estado (pendiente, copiando, verificado, error)
-- Número de intentos
-- Mensaje de error si aplica
+- `ruta_origen`, `ruta_destino` - Rutas completas
+- `nombre`, `extension`, `tamano` - Metadatos
+- `hash_origen`, `hash_destino` - Hashes SHA256
+- `estado` - (PENDIENTE, COPIANDO, VERIFICADO, ERROR, OMITIDO)
+- `intentos`, `mensaje_error` - Control de reintentos
 
 ### Tabla `carpetas`
 Estructura de directorios a replicar
 
 ### Tabla `log_eventos`
-Registro cronológico de todas las operaciones
+Registro cronológico de todas las operaciones con timestamp
+
+### Detección de sesiones anteriores
+
+Al escanear, la aplicación busca sesiones previas con las mismas rutas origen/destino que no estén completadas. Esto permite:
+- Reanudar backups después de cerrar la aplicación
+- Continuar copias que tomaron varios días
+- Evitar re-escanear archivos ya catalogados
 
 ---
 
@@ -229,10 +287,19 @@ MIT License - Libre para uso personal y comercial.
 
 ---
 
-## 🤝 Contribuciones
+## 🏢 Desarrollado por
 
-Las contribuciones son bienvenidas. Por favor, abre un issue para discutir cambios mayores antes de enviar un PR.
+<p align="center">
+  <a href="https://robustdatasolutions.com">
+    <img src="assets/logo.png" alt="Robust Data Solutions" width="200">
+  </a>
+</p>
 
----
+<p align="center">
+  <strong>Robust Data Solutions</strong><br>
+  Soluciones profesionales de gestión de datos
+</p>
 
-**Desarrollado con ❤️ para facilitar backups seguros y verificables**
+<p align="center">
+  <a href="https://robustdatasolutions.com">robustdatasolutions.com</a>
+</p>

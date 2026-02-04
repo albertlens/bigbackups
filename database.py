@@ -168,6 +168,69 @@ class Database:
             cursor.execute("SELECT * FROM sesiones ORDER BY fecha_creacion DESC")
             return [dict(row) for row in cursor.fetchall()]
     
+    def buscar_sesion_por_rutas(self, ruta_origen: str, ruta_destino: str) -> Optional[Dict[str, Any]]:
+        """
+        Busca una sesión existente con las mismas rutas origen y destino.
+        Devuelve la sesión más reciente que no esté completada.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM sesiones 
+                WHERE ruta_origen = ? AND ruta_destino = ?
+                AND estado != ?
+                ORDER BY fecha_ultima_actividad DESC
+                LIMIT 1
+            """, (ruta_origen, ruta_destino, SessionStatus.COMPLETED))
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+    
+    def obtener_progreso_sesion(self, sesion_id: int) -> Dict[str, int]:
+        """Obtiene el progreso de una sesión (archivos copiados vs pendientes)."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Total de archivos
+            cursor.execute("SELECT COUNT(*) FROM archivos WHERE sesion_id = ?", (sesion_id,))
+            total = cursor.fetchone()[0]
+            
+            # Archivos copiados (verificados)
+            cursor.execute("""
+                SELECT COUNT(*) FROM archivos 
+                WHERE sesion_id = ? AND estado = ?
+            """, (sesion_id, FileStatus.COPIED))
+            copiados = cursor.fetchone()[0]
+            
+            # Archivos pendientes
+            cursor.execute("""
+                SELECT COUNT(*) FROM archivos 
+                WHERE sesion_id = ? AND estado = ?
+            """, (sesion_id, FileStatus.PENDING))
+            pendientes = cursor.fetchone()[0]
+            
+            # Bytes copiados y totales
+            cursor.execute("""
+                SELECT COALESCE(SUM(tamano_bytes), 0) FROM archivos 
+                WHERE sesion_id = ? AND estado = ?
+            """, (sesion_id, FileStatus.COPIED))
+            bytes_copiados = cursor.fetchone()[0]
+            
+            cursor.execute("""
+                SELECT COALESCE(SUM(tamano_bytes), 0) FROM archivos 
+                WHERE sesion_id = ?
+            """, (sesion_id,))
+            bytes_totales = cursor.fetchone()[0]
+            
+            return {
+                'total': total,
+                'copiados': copiados,
+                'pendientes': pendientes,
+                'bytes_copiados': bytes_copiados,
+                'bytes_totales': bytes_totales
+            }
+    
     def actualizar_sesion(self, sesion_id: int, **kwargs):
         """Actualiza campos de una sesión."""
         if not kwargs:
