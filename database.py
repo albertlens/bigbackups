@@ -13,6 +13,25 @@ from pathlib import Path
 from config import get_db_path, FileStatus, SessionStatus
 
 
+def normalizar_ruta(ruta: str) -> str:
+    """
+    Normaliza una ruta para comparaciones consistentes.
+    - Convierte a minúsculas (Windows no es case-sensitive)
+    - Elimina trailing slashes
+    - Normaliza separadores
+    """
+    if not ruta:
+        return ruta
+    # Usar os.path.normpath para normalizar separadores y puntos
+    ruta = os.path.normpath(ruta)
+    # Convertir a minúsculas para Windows (case-insensitive)
+    ruta = ruta.lower()
+    # Eliminar trailing slash si existe (excepto para raíz como C:\)
+    if len(ruta) > 3 and ruta.endswith(os.sep):
+        ruta = ruta.rstrip(os.sep)
+    return ruta
+
+
 class Database:
     """Gestiona la base de datos SQLite de BigBackups."""
     
@@ -138,17 +157,22 @@ class Database:
     def crear_sesion(self, nombre: str, ruta_origen: str, ruta_destino: str) -> int:
         """
         Crea una nueva sesión de backup.
+        Las rutas se normalizan antes de guardar para permitir búsquedas consistentes.
         
         Returns:
             ID de la sesión creada
         """
+        # Normalizar rutas para búsquedas consistentes
+        ruta_origen_norm = normalizar_ruta(ruta_origen)
+        ruta_destino_norm = normalizar_ruta(ruta_destino)
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute("""
                 INSERT INTO sesiones (nombre, ruta_origen, ruta_destino, estado, fecha_creacion, fecha_ultima_actividad)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (nombre, ruta_origen, ruta_destino, SessionStatus.CREATED, now, now))
+            """, (nombre, ruta_origen_norm, ruta_destino_norm, SessionStatus.CREATED, now, now))
             return cursor.lastrowid
     
     def obtener_sesion(self, sesion_id: int) -> Optional[Dict[str, Any]]:
@@ -172,16 +196,24 @@ class Database:
         """
         Busca una sesión existente con las mismas rutas origen y destino.
         Devuelve la sesión más reciente que no esté completada.
+        Las rutas se normalizan antes de buscar para coincidencias consistentes.
+        Usa LOWER() en SQL para compatibilidad con sesiones antiguas no normalizadas.
         """
+        # Normalizar rutas para búsqueda
+        ruta_origen_norm = normalizar_ruta(ruta_origen)
+        ruta_destino_norm = normalizar_ruta(ruta_destino)
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
+            # Usar LOWER() y RTRIM para compatibilidad con datos existentes
             cursor.execute("""
                 SELECT * FROM sesiones 
-                WHERE ruta_origen = ? AND ruta_destino = ?
+                WHERE LOWER(RTRIM(RTRIM(ruta_origen, '/'), '\\')) = ? 
+                AND LOWER(RTRIM(RTRIM(ruta_destino, '/'), '\\')) = ?
                 AND estado != ?
                 ORDER BY fecha_ultima_actividad DESC
                 LIMIT 1
-            """, (ruta_origen, ruta_destino, SessionStatus.COMPLETED))
+            """, (ruta_origen_norm, ruta_destino_norm, SessionStatus.COMPLETED))
             row = cursor.fetchone()
             if row:
                 return dict(row)
