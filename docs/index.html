@@ -105,6 +105,46 @@
         .lang-native {
             font-size: 0.9rem;
             color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .format-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .format-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .format-btn.html {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .format-btn.html:hover {
+            background: rgba(59, 130, 246, 0.4);
+        }
+
+        .format-btn.pdf {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .format-btn.pdf:hover {
+            background: rgba(239, 68, 68, 0.4);
         }
 
         .download-section {
@@ -183,7 +223,7 @@
         <p class="manuals-title">📚 Selecciona el idioma del manual</p>
 
         <div class="cards">
-            <a href="LEEME_ES.html" class="card" target="_blank">
+            <div class="card">
                 <span class="flag">
                     <svg viewBox="0 0 640 480" width="64" height="48">
                         <path fill="#AA151B" d="M0 0h640v480H0z"/>
@@ -192,9 +232,13 @@
                 </span>
                 <div class="lang-name">Español</div>
                 <div class="lang-native">Manual de usuario</div>
-            </a>
+                <div class="format-buttons">
+                    <a href="LEEME_ES.html" class="format-btn html" target="_blank">🌐 HTML</a>
+                    <a href="LEEME_ES.pdf" class="format-btn pdf" download>📄 PDF</a>
+                </div>
+            </div>
 
-            <a href="README_EN.html" class="card" target="_blank">
+            <div class="card">
                 <span class="flag">
                     <svg viewBox="0 0 640 480" width="64" height="48">
                         <path fill="#012169" d="M0 0h640v480H0z"/>
@@ -206,9 +250,13 @@
                 </span>
                 <div class="lang-name">English</div>
                 <div class="lang-native">User Manual</div>
-            </a>
+                <div class="format-buttons">
+                    <a href="README_EN.html" class="format-btn html" target="_blank">🌐 HTML</a>
+                    <a href="README_EN.pdf" class="format-btn pdf" download>📄 PDF</a>
+                </div>
+            </div>
 
-            <a href="LLEGEIX_CA.html" class="card" target="_blank">
+            <div class="card">
                 <span class="flag">
                     <svg viewBox="0 0 640 480" width="64" height="48">
                         <path fill="#FCDD09" d="M0 0h640v480H0z"/>
@@ -217,7 +265,11 @@
                 </span>
                 <div class="lang-name">Català</div>
                 <div class="lang-native">Manual d'usuari</div>
-            </a>
+                <div class="format-buttons">
+                    <a href="LLEGEIX_CA.html" class="format-btn html" target="_blank">🌐 HTML</a>
+                    <a href="LLEGEIX_CA.pdf" class="format-btn pdf" download>📄 PDF</a>
+                </div>
+            </div>
         </div>
 
         <div class="download-section">
