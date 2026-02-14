@@ -86,6 +86,25 @@ La aplicación cuenta con una GUI moderna y profesional con tema oscuro:
 - Botones de Pausar/Cancelar operación
 - **Icono personalizado** en ventana y barra de tareas
 
+### 📸 Capturas de pantalla
+
+<p align="center">
+  <img src="assets/screenshots/screenshot001.png" alt="Pantalla inicial" width="400">
+  <img src="assets/screenshots/screenshot002.png" alt="Selección de carpetas" width="400">
+</p>
+<p align="center">
+  <img src="assets/screenshots/screenshot003.png" alt="Escaneo" width="400">
+  <img src="assets/screenshots/screenshot004.png" alt="Progreso de copia" width="400">
+</p>
+<p align="center">
+  <img src="assets/screenshots/screenshot005.png" alt="Estadísticas" width="400">
+  <img src="assets/screenshots/screenshot006.png" alt="Verificación" width="400">
+</p>
+<p align="center">
+  <img src="assets/screenshots/screenshot007.png" alt="Completado" width="400">
+  <img src="assets/screenshots/screenshot008.png" alt="Log de eventos" width="400">
+</p>
+
 ---
 
 ## 📦 Instalación
