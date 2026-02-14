@@ -62,16 +62,35 @@ class SessionStatus:
     PAUSED = "PAUSADA"
     ERROR = "ERROR"
 
-# Colores para la GUI
+# Colores para la GUI (tema oscuro con tonos índigo/azul)
 class Colors:
-    PRIMARY = "#1e88e5"
-    SUCCESS = "#43a047"
-    WARNING = "#fb8c00"
-    ERROR = "#e53935"
-    BACKGROUND = "#1a1a2e"
-    SURFACE = "#16213e"
-    TEXT = "#ffffff"
-    TEXT_SECONDARY = "#b0b0b0"
+    # Colores principales
+    PRIMARY = "#4f46e5"        # Índigo principal (botón escanear)
+    PRIMARY_HOVER = "#4338ca"  # Índigo oscuro hover
+    SECONDARY = "#6366f1"      # Índigo claro (botón copiar)
+    SECONDARY_HOVER = "#4f46e5"
+    ACCENT = "#818cf8"         # Índigo suave (verificar)
+    ACCENT_HOVER = "#6366f1"
+    
+    # Colores de acción
+    ACTION_PAUSE = "#64748b"   # Slate (pausar) - neutral
+    ACTION_PAUSE_HOVER = "#475569"
+    ACTION_CANCEL = "#94a3b8"  # Slate claro (cancelar)
+    ACTION_CANCEL_HOVER = "#64748b"
+    
+    # Colores de estado (más sutiles)
+    SUCCESS = "#22c55e"        # Verde para mensajes OK
+    WARNING = "#f59e0b"        # Ámbar para warnings
+    ERROR = "#ef4444"          # Rojo para errores (solo texto/log)
+    
+    # Colores de fondo
+    BACKGROUND = "#0f172a"     # Slate 900 - muy oscuro
+    SURFACE = "#1e293b"        # Slate 800
+    SURFACE_LIGHT = "#334155"  # Slate 700
+    
+    # Colores de texto
+    TEXT = "#f8fafc"           # Slate 50 - casi blanco
+    TEXT_SECONDARY = "#94a3b8" # Slate 400
 
 # Obtener ruta de la aplicación (compatible con PyInstaller)
 def get_app_path():

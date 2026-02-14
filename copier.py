@@ -412,7 +412,7 @@ class FileCopier:
         # Obtener estadísticas
         stats_db = self.db.obtener_estadisticas_sesion(sesion_id)
         
-        # Inicializar estadísticas
+        # Inicializar estadísticas con los valores actuales (incluye progreso previo)
         self.stats = CopyStats(
             total_archivos=stats_db['total_archivos'],
             total_bytes=stats_db['tamano_total'],
@@ -421,12 +421,15 @@ class FileCopier:
         )
         
         # Actualizar estado de sesión (guardamos la ruta final con subcarpeta)
-        self.db.actualizar_sesion(
-            sesion_id,
-            estado=SessionStatus.COPYING,
-            ruta_destino=ruta_destino_final,
-            fecha_inicio_copia=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        # Solo establecer fecha_inicio_copia si es la primera vez
+        update_fields = {
+            'estado': SessionStatus.COPYING,
+            'ruta_destino': ruta_destino_final
+        }
+        if not sesion.get('fecha_inicio_copia'):
+            update_fields['fecha_inicio_copia'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        self.db.actualizar_sesion(sesion_id, **update_fields)
         
         self.db.log(sesion_id, "INFO", f"Iniciando copia a: {ruta_destino_final}", "COPIER")
         
@@ -711,10 +714,11 @@ class PostCopyVerifier:
         self.db.log(sesion_id, "INFO", f"Verificación de hash: {'Sí' if verificar_hash else 'No'}", "VERIFIER")
         
         # Obtener todos los archivos completados de la sesión
+        # Incluimos ruta_destino guardada en cada archivo para usar la ruta correcta
         with self.db._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, ruta_origen, ruta_relativa, nombre_archivo, tamano_bytes, hash_origen
+                SELECT id, ruta_origen, ruta_relativa, ruta_destino, nombre_archivo, tamano_bytes, hash_origen
                 FROM archivos 
                 WHERE sesion_id = ? AND estado = ?
             """, (sesion_id, FileStatus.COMPLETED))
@@ -731,7 +735,13 @@ class PostCopyVerifier:
             
             ruta_origen_archivo = archivo['ruta_origen']
             ruta_relativa = archivo['ruta_relativa']
-            ruta_destino_archivo = os.path.join(ruta_destino, ruta_relativa)
+            
+            # Usar la ruta de destino guardada en el archivo, o construirla si no existe
+            if archivo.get('ruta_destino'):
+                ruta_destino_archivo = archivo['ruta_destino']
+            else:
+                ruta_destino_archivo = os.path.join(ruta_destino, ruta_relativa)
+            
             tamano_esperado = archivo['tamano_bytes']
             hash_esperado = archivo.get('hash_origen')
             

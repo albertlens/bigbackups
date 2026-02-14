@@ -192,12 +192,28 @@ class Database:
             cursor.execute("SELECT * FROM sesiones ORDER BY fecha_creacion DESC")
             return [dict(row) for row in cursor.fetchall()]
     
+    def obtener_sesiones_pendientes(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene sesiones que no están completadas (en curso, pausadas, etc.).
+        Útil para detectar sesiones que se pueden reanudar al iniciar la app.
+        
+        Returns:
+            Lista de sesiones pendientes ordenadas por última actividad (más reciente primero)
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM sesiones 
+                WHERE estado NOT IN (?, ?)
+                ORDER BY fecha_ultima_actividad DESC
+            """, (SessionStatus.COMPLETED, SessionStatus.CREATED))
+            return [dict(row) for row in cursor.fetchall()]
+    
     def buscar_sesion_por_rutas(self, ruta_origen: str, ruta_destino: str) -> Optional[Dict[str, Any]]:
         """
         Busca una sesión existente con las mismas rutas origen y destino.
         Devuelve la sesión más reciente que no esté completada.
         Las rutas se normalizan antes de buscar para coincidencias consistentes.
-        Usa LOWER() en SQL para compatibilidad con sesiones antiguas no normalizadas.
         """
         # Normalizar rutas para búsqueda
         ruta_origen_norm = normalizar_ruta(ruta_origen)
@@ -205,18 +221,20 @@ class Database:
         
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            # Usar LOWER() y RTRIM para compatibilidad con datos existentes
+            # Buscar sesiones no completadas con rutas coincidentes
+            # Comparamos normalizando también las rutas de la DB para compatibilidad
             cursor.execute("""
                 SELECT * FROM sesiones 
-                WHERE LOWER(RTRIM(RTRIM(ruta_origen, '/'), '\\')) = ? 
-                AND LOWER(RTRIM(RTRIM(ruta_destino, '/'), '\\')) = ?
-                AND estado != ?
+                WHERE estado != ?
                 ORDER BY fecha_ultima_actividad DESC
-                LIMIT 1
-            """, (ruta_origen_norm, ruta_destino_norm, SessionStatus.COMPLETED))
-            row = cursor.fetchone()
-            if row:
-                return dict(row)
+            """, (SessionStatus.COMPLETED,))
+            
+            for row in cursor.fetchall():
+                sesion = dict(row)
+                # Normalizar rutas de la sesión para comparar
+                if (normalizar_ruta(sesion['ruta_origen']) == ruta_origen_norm and
+                    normalizar_ruta(sesion['ruta_destino']) == ruta_destino_norm):
+                    return sesion
             return None
     
     def obtener_progreso_sesion(self, sesion_id: int) -> Dict[str, int]:
@@ -232,7 +250,7 @@ class Database:
             cursor.execute("""
                 SELECT COUNT(*) FROM archivos 
                 WHERE sesion_id = ? AND estado = ?
-            """, (sesion_id, FileStatus.COPIED))
+            """, (sesion_id, FileStatus.COMPLETED))
             copiados = cursor.fetchone()[0]
             
             # Archivos pendientes
@@ -246,7 +264,7 @@ class Database:
             cursor.execute("""
                 SELECT COALESCE(SUM(tamano_bytes), 0) FROM archivos 
                 WHERE sesion_id = ? AND estado = ?
-            """, (sesion_id, FileStatus.COPIED))
+            """, (sesion_id, FileStatus.COMPLETED))
             bytes_copiados = cursor.fetchone()[0]
             
             cursor.execute("""
