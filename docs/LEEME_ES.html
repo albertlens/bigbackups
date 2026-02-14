@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigBackups - Manual de Usuario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #2b2eff;
+            margin-bottom: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Hero section */
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo-container {
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            max-width: 280px;
+            height: auto;
+        }
+        
+        h1 {
+            color: #2b2eff;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #f5a623;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        /* Sections */
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #2b2eff;
+            font-size: 22px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        h3 {
+            color: #333;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+        }
+        
+        p {
+            margin-bottom: 12px;
+        }
+        
+        /* Info boxes */
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .info-box-yellow {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border-left: 4px solid #f5a623;
+        }
+        
+        .info-box-blue {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2b2eff;
+        }
+        
+        .info-box-green {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 4px solid #4caf50;
+        }
+        
+        .info-box-red {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border-left: 4px solid #f44336;
+        }
+        
+        .info-box-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+        }
+        
+        .feature-list li::before {
+            content: "●";
+            color: #2b2eff;
+            font-weight: bold;
+            position: absolute;
+            left: 10px;
+        }
+        
+        /* Steps */
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 12px 0;
+        }
+        
+        .step-number {
+            background: #2b2eff;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .step-number.yellow {
+            background: #f5a623;
+        }
+        
+        .step-content {
+            flex: 1;
+            padding-top: 3px;
+        }
+        
+        /* Antivirus grid */
+        .av-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 30px;
+            margin: 15px 0;
+        }
+        
+        .av-item {
+            padding: 5px 0;
+        }
+        
+        /* Code */
+        code {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+        }
+        
+        /* Links */
+        a {
+            color: #2b2eff;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Download button */
+        .download-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8ebff 100%);
+            border-radius: 12px;
+            border: 2px solid #2b2eff;
+        }
+        
+        .download-section h2 {
+            border-bottom: none;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #2b2eff 0%, #1a1ecc 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(43, 46, 255, 0.4);
+            text-decoration: none;
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        /* Lists */
+        ul {
+            margin: 10px 0 10px 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        /* Divider */
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <span>Manual de Usuario - BigBackups</span>
+    <span>Robust Data Solutions</span>
+</div>
+
+<div class="hero">
+    <div class="logo-container">
+        <svg class="logo" viewBox="0 0 724 267" xmlns="http://www.w3.org/2000/svg">
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M775,400.8L184.6,400.8L184.6,667L775,667C848.5,667 908.1,607.4 908.1,533.9C908.1,460.4 848.5,400.8 775,400.8Z" style="fill:rgb(43,46,255);"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <circle cx="772.5" cy="533.9" r="118.8" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M817.3,579L784.6,544.1C804.3,541.1 820.2,529 820.2,507.8C820.2,477.7 801.9,464.4 772.4,464.4L738.6,464.4C729,464.4 723.8,470.1 723.8,479.4L723.8,587.3C723.8,596.9 730,602.3 738.2,602.3C746.4,602.3 752.6,596.9 752.6,587.3L752.6,545.6L753,545.6L795.6,597.2C798.6,600.8 803.3,602.1 806.7,602.1C815.1,602.1 821.1,594.7 821.1,587.2C821.2,584.9 820,581.9 817.3,579ZM755.7,485.9L757.4,480.8L759.1,485.9L764.2,487.5L759.1,489.1L757.4,494.2L755.7,489.1L750.6,487.5L755.7,485.9ZM777.9,513.8L773.4,527.4C773,528.8 772.3,528.8 771.9,527.4L767.4,513.8C767,512.4 765.6,511.1 764.2,510.7L750.5,506.2C749.2,505.8 749.2,505.1 750.5,504.7L764.2,500.2C765.5,499.8 766.9,498.4 767.4,497.1L771.9,483.5C772.3,482.1 773,482.1 773.4,483.5L777.9,497.1C778.3,498.5 779.7,498.8 781.1,500.2L794.8,504.7C796.1,505.1 796.1,505.8 794.8,506.2L781.1,510.7C779.7,511.1 778.3,512.4 777.9,513.8Z" style="fill:rgb(43,46,255);"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M233.8,470.3C233.8,464.2 237.2,460.4 243.6,460.4L265.9,460.4C285.5,460.4 297.5,469.2 297.5,489.1C297.5,503.1 287,511.1 274,513.1L295.6,536.2C297.4,538.1 298.1,540 298.1,541.8C298.1,546.8 294.2,551.6 288.6,551.6C286.3,551.6 283.3,550.7 281.2,548.3L253,514.1L252.7,514.1L252.7,541.6C252.7,547.9 248.6,551.5 243.2,551.5C237.8,551.5 233.7,547.9 233.7,541.6L233.7,470.3L233.8,470.3ZM252.8,500.4L265.9,500.4C272.9,500.4 277.7,496.2 277.7,489.1C277.7,481.9 272.9,477.9 265.9,477.9L252.8,477.9L252.8,500.4Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M366.5,517.1C366.5,536.1 353.4,552.3 333.7,552.3C314,552.3 301,536.2 301,517.1C301,498.6 314.5,481.7 333.8,481.7C353.1,481.7 366.5,498.6 366.5,517.1ZM319.2,517.1C319.2,525.9 323.8,535.5 333.7,535.5C343.6,535.5 348.2,525.9 348.2,517.1C348.2,508.3 343.8,498.4 333.7,498.4C323.6,498.4 319.2,508.4 319.2,517.1Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M373.8,463.2C373.8,457.1 377.6,453 382.9,453C388.2,453 392,457.1 392,463.2L392,488C396.8,483.8 403,481.7 409.4,481.7C429.1,481.7 438.9,500.1 438.9,517.9C438.9,535.2 427.2,552.3 408.8,552.3C402.6,552.3 395.5,549.5 392,543.9C390.9,548.7 387.9,551.5 382.9,551.5C377.6,551.5 373.8,547.4 373.8,541.3L373.8,463.2ZM406.5,535.5C416,535.5 420.7,525.6 420.7,517.1C420.7,508.5 416,498.4 406.5,498.4C396.7,498.4 392.2,507.5 392.2,516.4C392.2,525.3 396.4,535.5 406.5,535.5Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M446.4,492.6C446.4,486.5 450.2,482.4 455.5,482.4C460.8,482.4 464.6,486.5 464.6,492.6L464.6,525.2C464.6,532.8 470.3,537 476.4,537C482.5,537 488.2,532.8 488.2,525.2L488.2,492.6C488.2,486.5 492,482.4 497.3,482.4C502.6,482.4 506.4,486.5 506.4,492.6L506.4,525.6C506.4,541.8 495.6,552.3 476.3,552.3C457,552.3 446.2,541.9 446.2,525.6L446.2,492.6L446.4,492.6Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M555.1,503C551.7,503 544.7,497.7 538.7,497.7C535.4,497.7 532.5,499.2 532.5,502.8C532.5,511.3 564.2,510 564.2,530.9C564.2,543.1 553.9,552.4 538.2,552.4C527.9,552.4 512.7,546.6 512.7,538.3C512.7,535.5 515.5,530.2 520.6,530.2C527.7,530.2 530.9,536.4 539.5,536.4C545.1,536.4 546.7,534.6 546.7,531.2C546.7,522.8 515,524.1 515,503.1C515,490.4 525.3,481.8 539.8,481.8C548.8,481.8 562.7,486 562.7,495C562.6,499.1 559.4,503 555.1,503Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M574.9,499.2L570.8,499.2C565.8,499.2 562.8,496.2 562.8,491.2C562.8,486.6 566.2,483.2 570.8,483.2L574.9,483.2L574.9,472.3C574.9,466.2 578.7,462.1 584,462.1C589.3,462.1 593.1,466.2 593.1,472.3L593.1,483.2L598.3,483.2C603,483.2 607.1,485.4 607.1,491.2C607.1,496.9 603,499.2 598.3,499.2L593.1,499.2L593.1,541.3C593.1,547.4 589.3,551.5 584,551.5C578.7,551.5 574.9,547.4 574.9,541.3L574.9,499.2Z" style="fill:white;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,-184.6,-400.8)">
+                <path d="M232,565.7C232,564.9 232.2,564.2 232.7,563.6C233.2,563 233.9,562.7 234.9,562.7L245.6,562.7C248.9,562.7 251.8,563.3 254.2,564.5C256.6,565.7 258.7,567.3 260.3,569.3C261.9,571.3 263.1,573.6 263.9,576.2C264.7,578.8 265.1,581.6 265.1,584.5C265.1,587.8 264.7,590.8 263.8,593.5C263,596.2 261.7,598.6 260.1,600.5C258.5,602.5 256.5,604 254.2,605.1C251.9,606.2 249.2,606.7 246.3,606.7L234.9,606.7C233.9,606.7 233.1,606.4 232.7,605.8C232.2,605.2 232,604.5 232,603.7L232,565.7ZM237.4,602L245.2,602C247.8,602 249.9,601.5 251.7,600.5C253.5,599.5 254.9,598.2 256.1,596.6C257.2,595 258,593.1 258.5,591C259,588.9 259.3,586.7 259.3,584.5C259.3,582.2 259,580.1 258.5,578C258,575.9 257.1,574.1 256,572.6C254.8,571 253.4,569.8 251.5,568.9C249.6,568 247.5,567.5 244.9,567.5L237.5,567.5L237.5,602L237.4,602Z" style="fill:white;"/>
+                <path d="M297.8,604.1C297.8,605 297.5,605.7 296.9,606.1C296.3,606.5 295.8,606.7 295.2,606.7C294.6,606.7 294.1,606.5 293.5,606.1C292.9,605.7 292.7,605 292.7,604.1L292.7,601.9L292.6,601.9C291.4,603.6 290.1,604.8 288.6,605.6C287.1,606.4 285.5,606.8 283.7,606.8C281.4,606.8 279.3,606.3 277.6,605.4C275.9,604.5 274.3,603.3 273.1,601.7C271.9,600.2 270.9,598.4 270.3,596.4C269.7,594.4 269.3,592.4 269.3,590.2C269.3,588.1 269.6,586 270.3,584C270.9,582 271.9,580.3 273.1,578.7C274.3,577.2 275.9,575.9 277.6,575C279.3,574.1 281.4,573.6 283.7,573.6C285.6,573.6 287.2,574 288.6,574.7C290,575.5 291.3,576.5 292.6,577.9L292.7,577.9L292.7,576.2C292.7,575.3 293,574.6 293.5,574.2C294.1,573.8 294.6,573.6 295.2,573.6C295.7,573.6 296.3,573.8 296.9,574.2C297.5,574.6 297.8,575.3 297.8,576.2L297.8,604.1ZM275.1,594.4C275.4,595.8 275.9,597 276.6,598.2C277.3,599.3 278.3,600.3 279.4,601C280.6,601.7 282,602.1 283.6,602.1C285.3,602.1 286.7,601.7 287.8,601C288.9,600.3 289.9,599.4 290.6,598.2C291.3,597 291.8,595.8 292.1,594.4C292.4,593 292.6,591.7 292.6,590.3C292.6,588.9 292.4,587.6 292.1,586.2C291.8,584.8 291.3,583.6 290.6,582.4C289.9,581.3 289,580.3 287.8,579.6C286.7,578.9 285.3,578.5 283.6,578.5C282,578.5 280.6,578.9 279.4,579.6C278.2,580.3 277.3,581.2 276.6,582.4C275.9,583.5 275.4,584.8 275.1,586.2C274.8,587.6 274.6,588.9 274.6,590.3C274.6,591.7 274.8,593 275.1,594.4Z" style="fill:white;"/>
+                <path d="M306.7,566.7C306.7,565.8 306.9,565.1 307.4,564.6C307.9,564.1 308.6,563.8 309.4,563.8C310.2,563.8 310.9,564.1 311.4,564.6C311.9,565.1 312.1,565.8 312.1,566.7L312.1,573.8L314.3,573.8C316.1,573.8 317,574.6 317,576.1C317,577.7 316.1,578.4 314.3,578.4L312.1,578.4L312.1,603.7C312.1,604.6 311.9,605.3 311.4,605.8C310.9,606.3 310.2,606.6 309.4,606.6C308.6,606.6 307.9,606.3 307.4,605.8C306.9,605.3 306.7,604.6 306.7,603.7L306.7,578.4L304.5,578.4C302.7,578.4 301.8,577.6 301.8,576.1C301.8,574.5 302.7,573.8 304.5,573.8L306.7,573.8L306.7,566.7Z" style="fill:white;"/>
+                <path d="M348.2,604.1C348.2,605 347.9,605.7 347.3,606.1C346.7,606.5 346.2,606.7 345.6,606.7C345,606.7 344.5,606.5 343.9,606.1C343.3,605.7 343.1,605 343.1,604.1L343.1,601.9L343,601.9C341.8,603.6 340.5,604.8 339,605.6C337.5,606.4 335.9,606.8 334.1,606.8C331.8,606.8 329.7,606.3 328,605.4C326.3,604.5 324.7,603.3 323.5,601.7C322.3,600.2 321.3,598.4 320.7,596.4C320.1,594.4 319.7,592.4 319.7,590.2C319.7,588.1 320,586 320.7,584C321.3,582 322.3,580.3 323.5,578.7C324.7,577.2 326.3,575.9 328,575C329.7,574.1 331.8,573.6 334.1,573.6C336,573.6 337.6,574 339,574.7C340.4,575.5 341.7,576.5 343,577.9L343.1,577.9L343.1,576.2C343.1,575.3 343.4,574.6 343.9,574.2C344.5,573.8 345,573.6 345.6,573.6C346.1,573.6 346.7,573.8 347.3,574.2C347.9,574.6 348.2,575.3 348.2,576.2L348.2,604.1ZM325.5,594.4C325.8,595.8 326.3,597 327,598.2C327.7,599.3 328.7,600.3 329.8,601C331,601.7 332.4,602.1 334,602.1C335.7,602.1 337.1,601.7 338.2,601C339.3,600.3 340.3,599.4 341,598.2C341.7,597 342.2,595.8 342.5,594.4C342.8,593 343,591.7 343,590.3C343,588.9 342.8,587.6 342.5,586.2C342.2,584.8 341.7,583.6 341,582.4C340.3,581.3 339.4,580.3 338.2,579.6C337.1,578.9 335.7,578.5 334,578.5C332.4,578.5 331,578.9 329.8,579.6C328.6,580.3 327.7,581.2 327,582.4C326.3,583.5 325.8,584.8 325.5,586.2C325.2,587.6 325,588.9 325,590.3C325,591.7 325.2,593 325.5,594.4Z" style="fill:white;"/>
+                <path d="M385.9,563.1C387.2,563.4 388.4,563.7 389.4,564.2C390.4,564.7 391.2,565.2 391.8,565.8C392.4,566.4 392.7,567.1 392.7,567.8C392.7,568.5 392.5,569 392.1,569.5C391.7,570 391.1,570.2 390.4,570.2C389.8,570.2 389.2,570.1 388.8,569.8C388.3,569.5 387.8,569.2 387.2,568.8C386.6,568.4 385.9,568.1 385,567.8C384.2,567.5 383.1,567.4 381.7,567.4C379.7,567.4 378,568 376.7,569.1C375.4,570.2 374.7,571.7 374.7,573.5C374.7,575.1 375.2,576.3 376.2,577.2C377.2,578.1 378.5,578.9 380.1,579.5C381.6,580.1 383.3,580.8 385.1,581.3C386.9,581.9 388.6,582.6 390.1,583.5C391.6,584.4 392.9,585.6 394,587.1C395,588.6 395.5,590.5 395.5,593C395.5,594.8 395.2,596.5 394.5,598.2C393.8,599.9 392.9,601.3 391.6,602.6C390.3,603.9 388.8,604.9 386.9,605.6C385,606.3 382.9,606.7 380.5,606.7C379.1,606.7 377.6,606.6 376.1,606.3C374.6,606 373.3,605.7 372.1,605.2C370.9,604.7 370,604.2 369.3,603.5C368.6,602.9 368.2,602.2 368.2,601.4C368.2,600.7 368.4,600 368.8,599.5C369.2,598.9 369.7,598.7 370.5,598.7C371,598.7 371.5,598.9 372,599.2C372.6,599.6 373.3,599.9 374.1,600.4C374.9,600.9 375.8,601.2 376.9,601.6C377.9,602 379.1,602.1 380.5,602.1C381.9,602.1 383.2,601.9 384.3,601.4C385.4,600.9 386.4,600.3 387.1,599.5C387.9,598.7 388.5,597.8 388.9,596.7C389.3,595.6 389.5,594.5 389.5,593.3C389.5,591.6 389,590.3 388,589.3C387,588.3 385.7,587.5 384.1,586.9C382.6,586.3 380.9,585.6 379.1,585.1C377.3,584.5 375.6,583.8 374.1,582.9C372.6,582 371.3,580.9 370.2,579.5C369.2,578.1 368.7,576.2 368.7,573.9C368.7,572.6 369,571.4 369.6,570C370.2,568.7 371.1,567.5 372.2,566.4C373.3,565.3 374.7,564.4 376.3,563.8C377.9,563.2 379.7,562.8 381.7,562.8C383.3,562.7 384.6,562.8 385.9,563.1Z" style="fill:white;"/>
+                <path d="M400.1,584.1C400.7,582.1 401.7,580.4 402.9,578.8C404.1,577.3 405.7,576 407.4,575.1C409.1,574.2 411.2,573.7 413.5,573.7C415.8,573.7 417.9,574.2 419.6,575.1C421.3,576 422.9,577.2 424.1,578.8C425.3,580.3 426.3,582.1 426.9,584.1C427.5,586.1 427.9,588.1 427.9,590.3C427.9,592.4 427.6,594.5 426.9,596.5C426.3,598.5 425.3,600.2 424.1,601.8C422.9,603.3 421.3,604.6 419.6,605.5C417.9,606.4 415.8,606.9 413.5,606.9C411.2,606.9 409.1,606.4 407.4,605.5C405.7,604.6 404.1,603.4 402.9,601.8C401.7,600.3 400.7,598.5 400.1,596.5C399.5,594.5 399.1,592.5 399.1,590.3C399.1,588.1 399.4,586.1 400.1,584.1ZM405,594.4C405.3,595.8 405.8,597 406.5,598.2C407.2,599.3 408.2,600.3 409.3,601C410.5,601.7 411.9,602.1 413.5,602.1C415.2,602.1 416.6,601.7 417.7,601C418.8,600.3 419.8,599.4 420.5,598.2C421.2,597 421.7,595.8 422,594.4C422.3,593 422.5,591.7 422.5,590.3C422.5,588.9 422.3,587.6 422,586.2C421.7,584.8 421.2,583.6 420.5,582.4C419.8,581.3 418.9,580.3 417.7,579.6C416.6,578.9 415.2,578.5 413.5,578.5C411.9,578.5 410.5,578.9 409.3,579.6C408.1,580.3 407.2,581.2 406.5,582.4C405.8,583.5 405.3,584.8 405,586.2C404.7,587.6 404.5,588.9 404.5,590.3C404.5,591.7 404.7,593 405,594.4Z" style="fill:white;"/>
+                <path d="M439.2,603.8C439.2,604.7 439,605.4 438.5,605.9C438,606.4 437.3,606.7 436.5,606.7C435.7,606.7 435,606.4 434.5,605.9C434,605.4 433.8,604.7 433.8,603.8L433.8,561.9C433.8,561 434,560.3 434.5,559.8C435,559.3 435.7,559 436.5,559C437.3,559 438,559.3 438.5,559.8C439,560.3 439.2,561 439.2,561.9L439.2,603.8Z" style="fill:white;"/>
+                <path d="M446.4,576.7C446.4,575.8 446.6,575.1 447.1,574.6C447.6,574.1 448.3,573.8 449.1,573.8C449.9,573.8 450.6,574.1 451.1,574.6C451.6,575.1 451.8,575.8 451.8,576.7L451.8,593.7C451.8,599.3 454.3,602.1 459.4,602.1C464.5,602.1 467,599.3 467,593.7L467,576.7C467,575.8 467.2,575.1 467.7,574.6C468.2,574.1 468.9,573.8 469.7,573.8C470.5,573.8 471.2,574.1 471.7,574.6C472.2,575.1 472.4,575.8 472.4,576.7L472.4,593.9C472.4,596.2 472,598.2 471.3,599.9C470.6,601.6 469.6,602.9 468.4,603.9C467.2,604.9 465.8,605.7 464.2,606.1C462.6,606.5 461,606.8 459.4,606.8C457.8,606.8 456.1,606.6 454.6,606.1C453.1,605.6 451.6,604.9 450.4,603.9C449.2,602.9 448.2,601.5 447.5,599.9C446.8,598.3 446.4,596.3 446.4,593.9L446.4,576.7Z" style="fill:white;"/>
+                <path d="M481.4,566.7C481.4,565.8 481.6,565.1 482.1,564.6C482.6,564.1 483.3,563.8 484.1,563.8C484.9,563.8 485.6,564.1 486.1,564.6C486.6,565.1 486.8,565.8 486.8,566.7L486.8,573.8L489,573.8C490.8,573.8 491.7,574.6 491.7,576.1C491.7,577.7 490.8,578.4 489,578.4L486.8,578.4L486.8,603.7C486.8,604.6 486.6,605.3 486.1,605.8C485.6,606.3 484.9,606.6 484.1,606.6C483.3,606.6 482.6,606.3 482.1,605.8C481.6,605.3 481.4,604.6 481.4,603.7L481.4,578.4L479.2,578.4C477.4,578.4 476.5,577.6 476.5,576.1C476.5,574.5 477.4,573.8 479.2,573.8L481.4,573.8L481.4,566.7Z" style="fill:white;"/>
+                <path d="M496,563.6C496.6,563 497.4,562.6 498.4,562.6C499.4,562.6 500.1,562.9 500.8,563.6C501.4,564.2 501.8,565 501.8,566C501.8,566.9 501.5,567.7 500.8,568.4C500.2,569 499.4,569.4 498.4,569.4C497.4,569.4 496.7,569.1 496,568.4C495.3,567.7 495,567 495,566C495.1,565.1 495.4,564.3 496,563.6ZM501.1,603.8C501.1,604.7 500.9,605.4 500.4,605.9C499.9,606.4 499.2,606.7 498.4,606.7C497.6,606.7 496.9,606.4 496.4,605.9C495.9,605.4 495.7,604.7 495.7,603.8L495.7,576.6C495.7,575.7 495.9,575 496.4,574.5C496.9,574 497.6,573.7 498.4,573.7C499.2,573.7 499.9,574 500.4,574.5C500.9,575 501.1,575.7 501.1,576.6L501.1,603.8Z" style="fill:white;"/>
+                <path d="M507.9,584.1C508.5,582.1 509.5,580.4 510.7,578.8C511.9,577.3 513.5,576 515.2,575.1C516.9,574.2 519,573.7 521.3,573.7C523.6,573.7 525.7,574.2 527.4,575.1C529.1,576 530.7,577.2 531.9,578.8C533.1,580.3 534.1,582.1 534.7,584.1C535.3,586.1 535.7,588.1 535.7,590.3C535.7,592.4 535.4,594.5 534.7,596.5C534.1,598.5 533.1,600.2 531.9,601.8C530.7,603.3 529.1,604.6 527.4,605.5C525.7,606.4 523.6,606.9 521.3,606.9C519,606.9 516.9,606.4 515.2,605.5C513.5,604.6 511.9,603.4 510.7,601.8C509.5,600.3 508.5,598.5 507.9,596.5C507.3,594.5 506.9,592.5 506.9,590.3C506.9,588.1 507.2,586.1 507.9,584.1ZM512.8,594.4C513.1,595.8 513.6,597 514.3,598.2C515,599.3 516,600.3 517.1,601C518.3,601.7 519.7,602.1 521.3,602.1C523,602.1 524.4,601.7 525.5,601C526.6,600.3 527.6,599.4 528.3,598.2C529,597 529.5,595.8 529.8,594.4C530.1,593 530.3,591.7 530.3,590.3C530.3,588.9 530.1,587.6 529.8,586.2C529.5,584.8 529,583.6 528.3,582.4C527.6,581.3 526.7,580.3 525.5,579.6C524.4,578.9 523,578.5 521.3,578.5C519.7,578.5 518.3,578.9 517.1,579.6C515.9,580.3 515,581.2 514.3,582.4C513.6,583.5 513.1,584.8 512.8,586.2C512.5,587.6 512.3,588.9 512.3,590.3C512.3,591.7 512.5,593 512.8,594.4Z" style="fill:white;"/>
+                <path d="M541.6,576.7C541.6,575.8 541.8,575.1 542.3,574.6C542.8,574.1 543.5,573.8 544.3,573.8C545.1,573.8 545.8,574.1 546.3,574.6C546.8,575.1 547,575.8 547,576.7L547,578L547.1,578.1C548.3,576.5 549.7,575.4 551.3,574.8C552.9,574.1 554.5,573.8 556.2,573.8C557.5,573.8 558.8,574 560.1,574.4C561.4,574.8 562.7,575.5 563.8,576.5C564.9,577.5 565.8,578.7 566.6,580.3C567.3,581.9 567.7,583.8 567.7,586L567.7,603.8C567.7,604.7 567.5,605.4 567,605.9C566.5,606.4 565.8,606.7 565,606.7C564.2,606.7 563.5,606.5 563,605.9C562.5,605.3 562.3,604.7 562.3,603.8L562.3,586.3C562.3,584.9 562.1,583.7 561.6,582.7C561.1,581.7 560.6,580.9 559.8,580.3C559.1,579.7 558.3,579.2 557.4,578.9C556.5,578.6 555.6,578.4 554.7,578.4C553.8,578.4 552.9,578.6 552,578.9C551.1,579.2 550.3,579.7 549.6,580.3C548.9,580.9 548.3,581.7 547.8,582.7C547.3,583.7 547.1,584.9 547.1,586.3L547.1,603.8C547.1,604.7 546.9,605.4 546.4,605.9C545.9,606.4 545.2,606.7 544.4,606.7C543.6,606.7 542.9,606.4 542.4,605.9C541.9,605.4 541.7,604.7 541.7,603.8L541.7,576.7L541.6,576.7Z" style="fill:white;"/>
+                <path d="M575.1,578.9C575.8,577.8 576.6,576.8 577.7,576.1C578.8,575.3 579.9,574.8 581.3,574.4C582.6,574 584,573.8 585.3,573.8C586.4,573.8 587.6,573.9 588.9,574.2C590.2,574.5 591.4,574.9 592.5,575.4C593.6,575.9 594.5,576.5 595.2,577.2C595.9,577.9 596.3,578.7 596.3,579.5C596.3,580.1 596.1,580.6 595.7,581C595.3,581.5 594.7,581.7 593.8,581.7C593.2,581.7 592.7,581.5 592.2,581.2C591.7,580.9 591.2,580.5 590.6,580.1C590,579.7 589.3,579.3 588.5,579C587.7,578.7 586.6,578.5 585.3,578.5C583.7,578.5 582.4,578.8 581.3,579.5C580.2,580.2 579.6,581.2 579.6,582.5C579.6,583.4 580,584.2 580.9,584.8C581.8,585.4 582.8,586 584.1,586.6C585.4,587.1 586.8,587.7 588.3,588.2C589.8,588.7 591.2,589.4 592.5,590.1C593.8,590.8 594.9,591.7 595.7,592.8C596.5,593.9 597,595.1 597,596.7C597,598.4 596.7,599.8 596,601.1C595.3,602.3 594.4,603.3 593.3,604.2C592.2,605 590.9,605.6 589.5,606C588.1,606.4 586.6,606.6 585.1,606.6C583.4,606.6 581.8,606.4 580.2,606C578.6,605.6 577.4,605.1 576.3,604.5C575.2,603.9 574.3,603.2 573.7,602.5C573.1,601.8 572.7,601 572.7,600.3C572.7,599.6 572.9,599 573.4,598.5C573.9,598 574.4,597.8 574.9,597.8C575.5,597.8 576.1,598 576.7,598.4C577.3,598.8 578,599.3 578.7,599.8C579.5,600.3 580.4,600.8 581.4,601.2C582.4,601.6 583.7,601.8 585.2,601.8C587.2,601.8 588.7,601.3 589.9,600.4C591,599.5 591.6,598.5 591.6,597.4C591.6,596.4 591.2,595.5 590.3,594.8C589.4,594.1 588.4,593.4 587.1,592.8C585.8,592.2 584.4,591.6 582.9,591C581.4,590.4 580,589.8 578.7,589C577.4,588.3 576.3,587.4 575.5,586.4C574.7,585.4 574.2,584.1 574.2,582.6C574.2,581.1 574.4,580.1 575.1,578.9Z" style="fill:white;"/>
+            </g>
+        </svg>
+    </div>
+    <h1>BigBackups</h1>
+    <div class="subtitle">Herramienta de Copia de Seguridad Reanudable</div>
+</div>
+
+<div class="download-section">
+    <h2>Descargar BigBackups</h2>
+    <p>Descarga gratuita para Windows 10/11 - Sin instalación, ejecutable portable</p>
+    <a href="https://github.com/albertlens/bigbackups/releases/latest" target="_blank" class="download-btn">⬇ Descargar última versión</a>
+</div>
+
+<div class="section">
+    <h2>¿Qué es BigBackups?</h2>
+    <p>BigBackups es una aplicación de escritorio para Windows que permite copiar grandes volúmenes de datos de manera segura y reanudable.</p>
+    
+    <div class="info-box info-box-yellow">
+        <div class="info-box-title">Característica principal:</div>
+        Si pausas la copia hoy, mañana puedes continuar exactamente donde lo dejaste. Sin perder progreso, sin empezar de cero.
+    </div>
+</div>
+
+<div class="section">
+    <h2>¿Por qué desarrollamos BigBackups?</h2>
+    <p>En Robust Data Solutions, tras firmar los acuerdos de confidencialidad (NDA) pertinentes, nuestros clientes frecuentemente necesitan transferirnos grandes volúmenes de datos para auditorías, procesado de información o análisis con inteligencia artificial.</p>
+    
+    <div class="info-box info-box-blue">
+        <div class="info-box-title">El problema con el sistema de copia de Windows</div>
+        El explorador de Windows presenta serias limitaciones al copiar carpetas con grandes volúmenes de datos:
+    </div>
+    
+    <ul class="feature-list">
+        <li><strong>Tiempos excesivos</strong> - El cálculo inicial puede tardar horas antes de comenzar la copia real</li>
+        <li><strong>Sin tolerancia a errores</strong> - Si encuentra un archivo en uso, bloqueado o con permisos especiales, la operación se detiene completamente</li>
+        <li><strong>Pérdida total de progreso</strong> - Ante cualquier interrupción (error, reinicio, corte de luz), no hay forma de continuar: hay que borrar todo y empezar de cero</li>
+        <li><strong>Sin registro de estado</strong> - No existe un log de qué archivos se han copiado, cuáles faltan, ni por dónde continuar</li>
+    </ul>
+    
+    <p>BigBackups soluciona estos problemas manteniendo un registro detallado de cada archivo, permitiendo pausar y reanudar en cualquier momento, y verificando la integridad mediante SHA-256.</p>
+</div>
+
+<div class="section">
+    <h2>Características</h2>
+    <ul class="feature-list">
+        <li><strong>Copia reanudable</strong> - Pausa y continúa cuando quieras, incluso días después</li>
+        <li><strong>Verificación SHA-256</strong> - Comprueba la integridad de cada archivo copiado</li>
+        <li><strong>Multiidioma</strong> - Disponible en Español, Català e English</li>
+        <li><strong>Portable</strong> - Ejecutable portable, no modifica el sistema</li>
+        <li><strong>Interfaz moderna</strong> - Tema oscuro, fácil de usar</li>
+        <li><strong>Tiempo total acumulado</strong> - Muestra el tiempo real de todas las sesiones</li>
+    </ul>
+    
+    <div class="info-box info-box-blue">
+        <div class="info-box-title">¿Por qué SHA-256?</div>
+        SHA-256 genera una "huella digital" única para cada archivo. BigBackups calcula esta huella en origen y destino para garantizar que el archivo se copió completamente, el contenido es idéntico y no hubo errores. Es el estándar usado por bancos y gobiernos.
+    </div>
+</div>
+
+<div class="section">
+    <h2>Requisitos del Sistema</h2>
+    <ul>
+        <li>Windows 10 o superior</li>
+        <li>100 MB de espacio libre</li>
+        <li>No requiere instalación ni permisos de administrador</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>Instrucciones de Uso</h2>
+    
+    <h3>Ejecutar BigBackups</h3>
+    <p>Haga doble clic en <code>BigBackups.exe</code></p>
+    
+    <div class="info-box info-box-yellow">
+        <div class="info-box-title">Si Windows muestra una alerta de seguridad</div>
+        Es normal para aplicaciones nuevas. Siga estos pasos:
+    </div>
+    
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">Clic en <strong>"Más información"</strong></div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">Clic en <strong>"Ejecutar de todos modos"</strong></div>
+    </div>
+    
+    <h3>Uso de la Aplicación</h3>
+    
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content"><strong>Seleccionar Carpetas</strong> - Origen: carpeta a copiar | Destino: donde guardar</div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content"><strong>Escanear</strong> - Clic en "Escanear Origen" y espere el análisis</div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content"><strong>Copiar</strong> - Clic en "Iniciar Copia". Puede pausar en cualquier momento</div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content"><strong>Verificar</strong> - Use "Verificar Copia" para comprobar integridad con SHA-256</div>
+    </div>
+    
+    <h3>Reanudar una Copia</h3>
+    <p>Si cierra la aplicación durante una copia:</p>
+    
+    <div class="step">
+        <div class="step-number yellow">1</div>
+        <div class="step-content">Vuelva a abrir BigBackups</div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number yellow">2</div>
+        <div class="step-content">Aparecerá un mensaje preguntando si desea reanudar</div>
+    </div>
+    
+    <div class="step">
+        <div class="step-number yellow">3</div>
+        <div class="step-content">Haga clic en "Reanudar" - continuará donde lo dejó</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Verificación de Seguridad</h2>
+    <p>Este software ha sido analizado en VirusTotal:</p>
+    
+    <div class="info-box info-box-green">
+        <span class="badge">67/72 motores confirman seguro (93%)</span><br><br>
+        <strong>Ver análisis:</strong> <a href="https://www.virustotal.com/gui/file/bf5acabb196b262d043588c9a1001b86109af2f62ae2688b4225fb81296c9e33" target="_blank">virustotal.com/gui/file/bf5acabb...</a>
+    </div>
+    
+    <div class="info-box info-box-red">
+        <div class="info-box-title">Nota sobre falsos positivos</div>
+        Algunos motores IA pueden mostrar alertas. Es común en apps Python empaquetadas.
+    </div>
+    
+    <p><strong>Principales antivirus que confirman seguro:</strong></p>
+    <div class="av-grid">
+        <div class="av-item">Windows Defender</div>
+        <div class="av-item">AVG</div>
+        <div class="av-item">Kaspersky</div>
+        <div class="av-item">ESET</div>
+        <div class="av-item">Norton</div>
+        <div class="av-item">Bitdefender</div>
+        <div class="av-item">Avast</div>
+        <div class="av-item">Malwarebytes</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Software Libre y Gratuito</h2>
+    <p>Aunque desarrollamos BigBackups inicialmente para nuestros clientes, hemos decidido ponerlo a disposición de <strong>cualquier persona u organización</strong> que desee utilizarlo, sin coste alguno.</p>
+    
+    <ul class="feature-list">
+        <li><strong>Úselo libremente</strong> - Sea cliente nuestro o no</li>
+        <li><strong>Distribúyalo</strong> - Compártalo con colegas, clientes o terceros sin restricciones</li>
+        <li><strong>Sin registro ni licencias</strong> - Descargue y ejecute, sin más</li>
+    </ul>
+    
+    <div class="info-box info-box-yellow">
+        Creemos que las herramientas útiles deben estar al alcance de todos.
+    </div>
+</div>
+
+<div class="section">
+    <h2>Código Abierto para Desarrolladores</h2>
+    <p>El código fuente completo está disponible en GitHub bajo licencia MIT. El proyecto está desarrollado con:</p>
+    
+    <ul class="feature-list">
+        <li><strong>Python 3.12</strong> - Con interfaz gráfica moderna (CustomTkinter)</li>
+        <li><strong>SQLite</strong> - Para persistencia de sesiones</li>
+        <li><strong>SHA-256</strong> - Para verificación de integridad</li>
+        <li><strong>Arquitectura modular</strong> - Código documentado y estructurado</li>
+    </ul>
+    
+    <p>Esperamos que sirva como <strong>inspiración o material de aprendizaje</strong> para otros desarrolladores interesados en:</p>
+    <ul>
+        <li>Gestión de operaciones de archivos a gran escala</li>
+        <li>Implementación de sistemas reanudables</li>
+        <li>Verificación de integridad con hashes criptográficos</li>
+        <li>Interfaces de usuario modernas en Python</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>Licencia MIT</h2>
+    <p>Este software se distribuye bajo la <strong>licencia MIT</strong>, una de las más permisivas del mundo open source:</p>
+    
+    <div class="info-box info-box-green">
+        Se permite usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del software sin restricciones, siempre que se incluya el aviso de copyright.
+    </div>
+    
+    <p><strong>Más información:</strong> <a href="https://github.com/albertlens/bigbackups/blob/main/LICENSE" target="_blank">github.com/albertlens/bigbackups/blob/main/LICENSE</a></p>
+</div>
+
+<div class="section">
+    <h2>Soporte Técnico</h2>
+    <p>Si tiene alguna pregunta o problema:</p>
+    <ul>
+        <li><strong>Email:</strong> info@robustdatasolutions.com</li>
+        <li><strong>Teléfono:</strong> +34 669 569 468</li>
+        <li><strong>Web:</strong> <a href="https://robustdatasolutions.com">robustdatasolutions.com</a></li>
+        <li><strong>GitHub:</strong> <a href="https://github.com/albertlens/bigbackups">github.com/albertlens/bigbackups</a></li>
+    </ul>
+</div>
+
+<hr>
+
+<div class="footer">
+    <span>© 2026 Robust Data Solutions</span>
+    <span>www.robustdatasolutions.com</span>
+</div>
+
+</body>
+</html>

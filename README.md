@@ -13,11 +13,32 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version">
+  <a href="https://github.com/albertlens/bigbackups/releases/latest"><img src="https://img.shields.io/github/v/release/albertlens/bigbackups?label=Release&color=success" alt="Release"></a>
+  <a href="https://github.com/albertlens/bigbackups/releases/latest"><img src="https://img.shields.io/github/downloads/albertlens/bigbackups/total?label=Downloads&color=blue" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/Python-3.11+-green.svg" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows-lightgrey.svg" alt="Platform">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 </p>
+
+---
+
+## 📥 Descarga
+
+<p align="center">
+  <a href="https://github.com/albertlens/bigbackups/releases/latest">
+    <img src="https://img.shields.io/badge/⬇_DESCARGAR_BigBackups.exe-v1.0.0-2ea44f?style=for-the-badge&logo=windows" alt="Descargar">
+  </a>
+</p>
+
+### 📚 Manuales de usuario
+
+| Idioma | Manual PDF |
+|--------|------------|
+| 🇪🇸 Español | [LEEME_ES.pdf](https://github.com/albertlens/bigbackups/releases/download/v1.0.0/LEEME_ES.pdf) |
+| 🇬🇧 English | [README_EN.pdf](https://github.com/albertlens/bigbackups/releases/download/v1.0.0/README_EN.pdf) |
+| 🏴󠁣󠁡󠁴󠁿 Català | [LLEGEIX_CA.pdf](https://github.com/albertlens/bigbackups/releases/download/v1.0.0/LLEGEIX_CA.pdf) |
+
+> 📖 **Documentación online:** [albertlens.github.io/bigbackups](https://albertlens.github.io/bigbackups/)
 
 ---
 
@@ -71,7 +92,7 @@ La aplicación cuenta con una GUI moderna y profesional con tema oscuro:
 
 ### Opción 1: Ejecutable portable (recomendado para usuarios finales)
 
-Descarga `BigBackups.exe` de la carpeta `dist/` y ejecútalo directamente. No requiere instalación.
+Descarga [`BigBackups.exe`](https://github.com/albertlens/bigbackups/releases/latest) desde la sección de Releases y ejecútalo directamente. No requiere instalación.
 
 ### Opción 2: Desde código fuente (desarrollo)
 
