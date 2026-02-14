@@ -25,7 +25,7 @@
 ## 📥 Descarga
 
 <p align="center">
-  <a href="https://github.com/albertlens/bigbackups/releases/latest">
+  <a href="https://github.com/albertlens/bigbackups/releases/download/v1.0.0/BigBackups.exe">
     <img src="https://img.shields.io/badge/⬇_DESCARGAR_BigBackups.exe-v1.0.0-2ea44f?style=for-the-badge&logo=windows" alt="Descargar">
   </a>
 </p>
